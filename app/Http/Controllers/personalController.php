@@ -41,7 +41,7 @@ class personalController extends Controller
         $personal_data = DB::table('personal')
             ->leftJoin('docente', 'docente.IdPersonal', '=', 'personal.IdPersonal')
             ->leftJoin('administrador', 'administrador.IdPersonal', '=', 'personal.IdPersonal')
-            ->join('departamento', 'departamento.IdDepartamento', '=', 'personal.IdDepartamento')
+            ->leftJoin('departamento', 'departamento.IdDepartamento', '=', 'personal.IdDepartamento')
             ->leftJoin('users', 'users.IdPersonal', '=', 'personal.IdPersonal')
             ->leftJoin('expediente', 'expediente.IdDocente', '=', 'docente.IdDocente')
             ->leftJoinSub($documentos_subidos, 'documentos_subidos', function ($join) {
@@ -62,7 +62,6 @@ class personalController extends Controller
                 'documentos_subidos.totalDocumentos'
             )
             ->get();
-        //dd($personal_data);
         return Inertia::render('Dashboard_admin_personal', ['user' => $user, 'personal' => $personal, 'departamentos' => $departamentos, 'personal_data' => $personal_data]);
     }
     public function nuevoPersonal(Request $request)
