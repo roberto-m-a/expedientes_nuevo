@@ -8,11 +8,12 @@ use App\Models\Docente;
 use App\Models\expediente;
 use App\Models\PeriodoEscolar;
 use App\Models\Personal;
+use App\Models\Secretaria;
 use App\Models\TipoDocumento;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 
 class expedienteController extends Controller
@@ -51,19 +52,21 @@ class expedienteController extends Controller
             //dd($expedientes);
             if (Administrador::where('IdPersonal', $personal->IdPersonal)->first() !== null) {
                 return Inertia::render('Dashboard_admin_expedientes', ['user' => $user, 'personal' => $personal, 'expedientes' => $expedientes]);
-            } else {
+            } 
+            if(Secretaria::where('IdPersonal', Auth::user()->IdPersonal)->first()!==null){
                 return Inertia::render('Dashboard_secre_expedientes', ['user' => $user, 'personal' => $personal, 'expedientes' => $expedientes]);
             }
         }
     }
     public function expedienteEspecifico($idExpediente)
     {
+        $user = User::find(Auth::user()->id);
+        $personal = Personal::where('IdPersonal', Auth::user()->IdPersonal)->first();
+        if(Docente::where('IdPersonal', $personal->IdPersonal)->first() != null)
+            return Redirect::route('dashboard');
         $expediente = expediente::where('IdExpediente', $idExpediente)->first();
         $docente = Docente::where('IdDocente', $expediente->IdDocente)->first();
         $personalDocente = Personal::where('IdPersonal', $docente->IdPersonal)->first();
-
-        $user = User::find(Auth::user()->id);
-        $personal = Personal::where('IdPersonal', Auth::user()->IdPersonal)->first();
 
         $tipo_documentos = TipoDocumento::all();
         $departamentos = Departamento::all();
@@ -83,7 +86,8 @@ class expedienteController extends Controller
 
         if (Administrador::where('IdPersonal', $personal->IdPersonal)->first() !== null) {
             return Inertia::render('Dashboard_admin_expedienteEspecifico', ['user' => $user, 'personal' => $personal, 'personalDocente' => $personalDocente, 'documentosDocente' => $documentosDocente, 'expediente' => $expediente, 'tipo_documentos' => $tipo_documentos, 'departamentos' => $departamentos, 'periodos_escolares' => $periodosEscolaresM]);
-        } else {
+        } 
+        if(Secretaria::where('IdPersonal', Auth::user()->IdPersonal)->first()!==null){
             return Inertia::render('Dashboard_secre_expedienteEspecifico', ['user' => $user, 'personal' => $personal, 'personalDocente' => $personalDocente, 'documentosDocente' => $documentosDocente, 'expediente' => $expediente, 'tipo_documentos' => $tipo_documentos, 'departamentos' => $departamentos, 'periodos_escolares' => $periodosEscolaresM]);
         }
     }

@@ -57,7 +57,9 @@ class documentController extends Controller
             if (Secretaria::where('IdPersonal', Auth::user()->IdPersonal)->first() !== null) {
                 return Inertia::render('Dashboard_secre_nuevoDocumento', ['user' => $user, 'personal' => $personal, 'departamentos' => $departamentos, 'expediente_data' => $expediente_dataM, 'periodosEscolares' => $periodosEscolaresM, 'tiposDocumentos' => $tiposDocumentos]);
             }
-            return Inertia::render('Dashboard_admin_nuevoDocumento', ['user' => $user, 'personal' => $personal, 'departamentos' => $departamentos, 'expediente_data' => $expediente_dataM, 'periodosEscolares' => $periodosEscolaresM, 'tiposDocumentos' => $tiposDocumentos]);
+            if (Administrador::where('IdPersonal', $personal->IdPersonal)->first() !== null) {
+                return Inertia::render('Dashboard_admin_nuevoDocumento', ['user' => $user, 'personal' => $personal, 'departamentos' => $departamentos, 'expediente_data' => $expediente_dataM, 'periodosEscolares' => $periodosEscolaresM, 'tiposDocumentos' => $tiposDocumentos]);
+            }
         }
     }
 
@@ -65,6 +67,8 @@ class documentController extends Controller
     {
         $user = User::find(Auth::user()->id);
         $personal = Personal::where('IdPersonal', Auth::user()->IdPersonal)->first();
+        if (Docente::where('IdPersonal', $personal->IdPersonal)->first() != null)
+            return Redirect::route('dashboard');
         $tipo_documentos = TipoDocumento::all();
         $departamentos = Departamento::all();
         $periodos_escolares = PeriodoEscolar::all();
@@ -92,13 +96,14 @@ class documentController extends Controller
             ->leftJoin('departamento', 'departamento.IdDepartamento', '=', 'documento.IdDepartamento')
             ->select('documento.*', 'tipo_documento.nombreTipoDoc', 'periodo_escolar.nombre_corto', 'departamento.nombreDepartamento', 'personal.Nombre', 'personal.Apellidos')
             ->get();
+        if (Secretaria::where('IdPersonal', $personal->IdPersonal)->first() !== null) {
+            return Inertia::render('Dashboard_secre_documentos', ['user' => $user, 'personal' => $personal, 'documentos' => $documentos, 'tipo_documentos' => $tipo_documentos, 'departamentos' => $departamentos, 'periodos_escolares' => $periodosEscolaresM, 'expedientes' => $expediente_dataM]);
+        }
         if (Administrador::where('IdPersonal', $personal->IdPersonal)->first() !== null) {
             return Inertia::render('Dashboard_admin_documentos', ['user' => $user, 'personal' => $personal, 'documentos' => $documentos, 'tipo_documentos' => $tipo_documentos, 'departamentos' => $departamentos, 'periodos_escolares' => $periodosEscolaresM, 'expedientes' => $expediente_dataM]);
         }
         //dd(Secretaria::where('IdPersonal',$personal->IdPersonal));
-        if (Secretaria::where('IdPersonal', $personal->IdPersonal)->first() !== null) {
-            return Inertia::render('Dashboard_secre_documentos', ['user' => $user, 'personal' => $personal, 'documentos' => $documentos, 'tipo_documentos' => $tipo_documentos, 'departamentos' => $departamentos, 'periodos_escolares' => $periodosEscolaresM, 'expedientes' => $expediente_dataM]);
-        }
+
     }
 
     public function nuevoDocumento(Request $request)
@@ -201,7 +206,7 @@ class documentController extends Controller
         $documento->IdExpediente = $request->Expediente['IdExpediente'];
         $documento->IdDepartamento = ($request->Region == 'Externo') ? null : $request->Departamento['IdDepartamento'];
         $documento->Dependencia = ($request->Region == 'Interno') ? '' : $request->Dependencia;
-        
+
         $documento->save();
     }
 

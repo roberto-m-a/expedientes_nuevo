@@ -1,5 +1,5 @@
 <script setup>
-import AuthenticatedLayout_admin from '@/Layouts/AuthenticatedLayout_admin.vue';
+import AuthenticatedLayout_secretaria from '@/Layouts/AuthenticatedLayout_secretaria.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
 import InputLabel from '@/Components/InputLabel.vue';
@@ -65,7 +65,7 @@ $.fn.dataTable.ext.search.push(function (settings, searchData) {
         return true;
     }
 
-    if (searchData[3].charAt(0) === _alphabetSearch) {
+    if (searchData[3].charAt(0).toUpperCase() === _alphabetSearch) {
         return true;
     }
 
@@ -438,7 +438,7 @@ const limpiar = () => {
 
     <Head title="Documentos" />
 
-    <AuthenticatedLayout_admin :user="user" :personal="personal">
+    <AuthenticatedLayout_secretaria :user="user" :personal="personal">
         <template #header>
             <div class="flex flex-row items-end space-x-4">
                 <h2 class="font-semibold text-2xl text-black leading-tight">Documentos</h2>
@@ -723,7 +723,7 @@ const limpiar = () => {
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout_admin>
+    </AuthenticatedLayout_secretaria>
 </template>
 <style>
 @import "vue-select/dist/vue-select.css";

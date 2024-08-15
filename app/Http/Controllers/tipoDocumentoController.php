@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Administrador;
+use App\Models\Docente;
 use App\Models\document;
 use App\Models\Personal;
 use App\Models\Secretaria;
@@ -20,6 +22,8 @@ class tipoDocumentoController extends Controller
     public function index(){
         $user = User::find(Auth::user()->id);
         $personal = Personal::where('IdPersonal', Auth::user()->IdPersonal)->first();
+        if(Docente::where('IdPersonal', $personal->IdPersonal)->first() != null)
+            return Redirect::route('dashboard');
         $tipoDocs = TipoDocumento::with('documento')
                     ->withCount('documento as numDocumentos')
                     ->get();
@@ -27,7 +31,9 @@ class tipoDocumentoController extends Controller
         if(Secretaria::where('IdPersonal', Auth::user()->IdPersonal)->first()!==null){
             return Inertia::render('Dashboard_secre_tipoDoc',['user'=>$user,'personal'=>$personal, 'tipoDocs'=>$tipoDocs]);
         }
-        return Inertia::render('Dashboard_admin_tipoDoc',['user'=>$user,'personal'=>$personal, 'tipoDocs'=>$tipoDocs]);
+        if (Administrador::where('IdPersonal', Auth::user()->IdPersonal)->first() !== null) {
+            return Inertia::render('Dashboard_admin_tipoDoc',['user'=>$user,'personal'=>$personal, 'tipoDocs'=>$tipoDocs]);
+        }
     }
 
     public function nuevoTipoDoc(Request $request){

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Administrador;
+use App\Models\Docente;
 use App\Models\PeriodoEscolar;
 use App\Models\Personal;
 use App\Models\Secretaria;
@@ -19,16 +21,20 @@ class periodoEscolarController extends Controller
     //
     public function index()
     {
-        $periodosEscolares = PeriodoEscolar::with('documento')
-            ->withCount('documento as numDocumentos')
-            ->get();
-
         $user = User::find(Auth::user()->id);
         $personal = Personal::where('IdPersonal', Auth::user()->IdPersonal)->first();
+        if(Docente::where('IdPersonal', $personal->IdPersonal)->first() != null)
+            return Redirect::route('dashboard');
+
+        $periodosEscolares = PeriodoEscolar::with('documento')
+        ->withCount('documento as numDocumentos')
+        ->get();
         if (Secretaria::where('IdPersonal', Auth::user()->IdPersonal)->first() !== null) {
             return Inertia::render('Dashboard_secre_PeriodoEscolar', ['user' => $user, 'personal' => $personal, 'periodosEscolares' => $periodosEscolares]);
         }
-        return Inertia::render('Dashboard_admin_PeriodoEscolar', ['user' => $user, 'personal' => $personal, 'periodosEscolares' => $periodosEscolares]);
+        if (Administrador::where('IdPersonal', Auth::user()->IdPersonal)->first() !== null) {
+            return Inertia::render('Dashboard_admin_PeriodoEscolar', ['user' => $user, 'personal' => $personal, 'periodosEscolares' => $periodosEscolares]);
+        }
     }
     public function nuevoPeriodoEscolar(Request $request)
     {

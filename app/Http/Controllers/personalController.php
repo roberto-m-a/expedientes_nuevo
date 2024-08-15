@@ -33,6 +33,8 @@ class personalController extends Controller
         $departamentos = Departamento::all();
         $user = User::find(Auth::user()->id);
         $personal = Personal::where('IdPersonal', Auth::user()->IdPersonal)->first();
+        if(Administrador::where('IdPersonal', $personal->IdPersonal)->first() == null)
+            return Redirect::route('dashboard');
 
         $documentos_subidos = DB::table('documento')
             ->select('documento.IdUsuario', DB::raw('count(*) as totalDocumentos'))

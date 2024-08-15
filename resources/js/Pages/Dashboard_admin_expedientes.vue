@@ -43,7 +43,7 @@ $.fn.dataTable.ext.search.push(function (settings, searchData) {
         return true;
     }
 
-    if (searchData[2].charAt(0) === _alphabetSearch) {
+    if (searchData[2].charAt(0).toUpperCase() === _alphabetSearch) {
         return true;
     }
 
