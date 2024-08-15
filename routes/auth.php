@@ -43,7 +43,7 @@ Route::middleware('guest')->group(function () {
                 ->name('password.store');
 });
 
-Route::get('/email/verify/{id}/{hash}', ValidacionEmailController::class)->middleware(['signed'])->name('verification.verify2');
+Route::get('/email/verify/{id}/{hash}', ValidacionEmailController::class)->name('verification.verify2');
 
 Route::middleware('auth')->group(function () {
     Route::get('verify-email', EmailVerificationPromptController::class)
