@@ -281,7 +281,7 @@ const editarDocumento = () => {
                             formEdit.reset();
                             document.getElementById('Archivo').value = null;
                             document.querySelector('#vistaPrevia').setAttribute('src', '');
-                            //location.reload();
+                            location.reload();
                         },
                         onError: () => {
                             console.log(formEdit.errors);
