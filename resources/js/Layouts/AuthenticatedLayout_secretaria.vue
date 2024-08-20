@@ -46,10 +46,10 @@ defineProps({
                                     Documentos
                                 </NavLink>
                                 <NavLink :href="route('tipoDoc')" :active="route().current('tipoDoc')">
-                                    Tipos de Documentos
+                                    Tipos de documentos
                                 </NavLink>
                                 <NavLink :href="route('periodoEscolar')" :active="route().current('periodoEscolar')">
-                                    Periodos escolares
+                                    Períodos escolares
                                 </NavLink>
                                 <NavLink :href="route('departamento')" :active="route().current('departamento')">
                                     Departamentos
@@ -128,10 +128,10 @@ defineProps({
                             Expedientes
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :href="route('tipoDoc')" :active="route().current('tipoDoc')">
-                            Tipos de Documentos
+                            Tipos de documentos
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :href="route('periodoEscolar')" :active="route().current('periodoEscolar')">
-                            Periodos escolares
+                            Períodos escolares
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :href="route('departamento')" :active="route().current('departamento')">
                             Departamentos

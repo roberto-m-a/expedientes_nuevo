@@ -80,20 +80,20 @@ $(document).ready(function () {
         autoWidth: false,
         language: {
             "decimal": "",
-            "emptyTable": "No hay información",
-            "info": "Mostrando _START_ a _END_ de _TOTAL_ Entradas",
-            "infoEmpty": "Mostrando 0 to 0 of 0 Entradas",
-            "infoFiltered": "(Filtrado de _MAX_ total entradas)",
+            "emptyTable": "No hay documentos",
+            "info": "Mostrando del documento _START_ al documento _END_ de un total de _TOTAL_ documentos",
+            "infoEmpty": "No hay documentos para mostrar",
+            "infoFiltered": "(Filtrado de _MAX_ documentos)",
             "infoPostFix": "",
             "thousands": ",",
-            "lengthMenu": "Mostrar _MENU_ Entradas",
+            "lengthMenu": "Mostrar _MENU_ documentos",
             "loadingRecords": "Cargando...",
             "processing": "Procesando...",
             "search": "Buscar:",
-            "zeroRecords": "Sin resultados encontrados",
+            "zeroRecords": "Sin documentos encontrados",
             "paginate": {
                 "first": "Primero",
-                "last": "Ultimo",
+                "last": "Último",
                 "next": "Siguiente",
                 "previous": "Anterior"
             },
@@ -104,25 +104,28 @@ $(document).ready(function () {
             {
                 title: "Estatus", data: null, render: function (data, type, row, meta) {
                     return (data.fechaEntrega == null) ?
-                        `En proceso: <button class="entregarDocumento flex flex-items justify-center bg-green-400 hover:bg-green-600 text-black font-semibold hover:text-white py-2 px-4 hover:border-transparent rounded" data-id="${row.IdDocumento}">
+                        `En proceso: 
+                        <div class=" flex justify-center">
+                        <button class="entregarDocumento flex flex-items justify-center bg-green-400 hover:bg-green-600 text-black font-semibold hover:text-white py-2 px-4 hover:border-transparent rounded" data-id="${row.IdDocumento}">
                     <svg class="h-5 w-5 text-black"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round">  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />  <polyline points="22 4 12 14.01 9 11.01" /></svg>
                     Entregar
                 </button>
+                </div>
             </div>`
                         : 'Entregado el: \t' + data.fechaEntrega;
                 },
             },
             { title: "Nombre", data: 'Nombre' },
             { title: "Apellidos", data: 'Apellidos' },
-            { title: "Titulo", data: 'Titulo' },
-            { title: 'Region', data: 'region' },
+            { title: "Título", data: 'Titulo' },
+            { title: 'Región', data: 'region' },
             {
                 title: 'Dpto/Dpncia', data: null, render: function (data, type, row, meta) {
                     return (data.IdDepartamento == null) ? data.dependencia : data.nombreDepartamento;
                 },
             },
-            { title: 'TipoDoc', data: 'nombreTipoDoc' },
-            { title: 'Periodo', data: 'nombre_corto' },
+            { title: 'Tipo', data: 'nombreTipoDoc' },
+            { title: 'Período', data: 'nombre_corto' },
             {
                 title: "Acciones", data: null, render: function (data, type, row, meta) {
                     return `<div class=" flex justify-center space-x-1">
@@ -270,7 +273,7 @@ const editarDocumento = () => {
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
-                    Swal.fire('Edición confirmada', 'El código es correcto.Espere a recargar la pagina', 'success');
+                    Swal.fire('Edición confirmada', 'El código es correcto.Espere a recargar la página', 'success');
                     formEdit.post(route('documento.editar'), {
                         preserveScroll: true,
                         onSuccess: () => {
@@ -278,7 +281,7 @@ const editarDocumento = () => {
                             formEdit.reset();
                             document.getElementById('Archivo').value = null;
                             document.querySelector('#vistaPrevia').setAttribute('src', '');
-                            location.reload();
+                            //location.reload();
                         },
                         onError: () => {
                             console.log(formEdit.errors);
@@ -449,8 +452,8 @@ const limpiar = () => {
                             <DangerButton @click="abrirEntrega = false; formEdit.reset()">X</DangerButton>
                         </div>
                         <form @submit.prevent="entregarDocumento">
-                            <InputLabel for="FechaEntrega" value="Fecha de expedición" class="pt-2" />
-                            <InputLabel for="FechaEntrega" :value="formEdit.FechaExpedicion" class="pt-2 font-semibold text-xl" />
+                            <InputLabel for="FechaExpedicion" value="Fecha de expedición" class="pt-2" />
+                            <InputLabel for="FechaExpedicion" :value="formEdit.FechaExpedicion" class="pt-2 font-semibold text-xl" />
                             <InputLabel for="FechaEntrega" value="Fecha de entrega" class="pt-2" />
                                 <TextInput id="FechaEntrega" type="date" :min="formEdit.FechaExpedicion"
                                     :max="fechaActual" class="mt-1 block w-full" required
@@ -463,7 +466,7 @@ const limpiar = () => {
                             </div>
 
                             <InputLabel for="archivo"
-                                value="Si desea actualizar el archivo ingrese un nuevo archivo.(peso max. 5MB)"
+                                value="Si desea actualizar el archivo ingrese un nuevo archivo.(peso máx. 5MB)"
                                 class="pt-2 text-l font-semibold text-center text-red-500" />
                             <div class="space-y-2">
                                 <TextInput id="Archivo" type="file" class="mt-1 block w-full" accept="application/pdf"
@@ -521,13 +524,13 @@ const limpiar = () => {
                                 class="border-white" />
                             <InputError class="mt-2" :message="formEdit.errors.Expediente" />
 
-                            <InputLabel for="tipoDocumento" value="¿Qué tipo de documento es?" class="pt-2" />
+                            <InputLabel for="tipoDocumento" value="Seleccione el tipo de documento" class="pt-2" />
                             <v-select type="text" id="tipoDocumento" label="nombreTipoDoc"
                                 placeholder="Introduce el tipo de documento" :options="tipo_documentos"
                                 :filterable="true" v-model="formEdit.TipoDocumento" class="border-white" />
                             <InputError class="mt-2" :message="formEdit.errors.TipoDocumento" />
 
-                            <InputLabel for="Titulo" value="Titulo" class="pt-2" />
+                            <InputLabel for="Titulo" value="Título del documento" class="pt-2" />
                             <TextInput id="Titulo" type="text" class="mt-1 block w-full" required
                                 v-model="formEdit.Titulo" />
                             <InputError class="mt-2" :message="formEdit.errors.Titulo" />
@@ -535,7 +538,7 @@ const limpiar = () => {
                             <TextInput id="FechaExpedición" type="date" :max="fechaActual" class="mt-1 block w-full"
                                 required v-model="formEdit.FechaExpedicion" />
                             <InputError class="mt-2" :message="formEdit.errors.FechaExpedicion" />
-                            <InputLabel for="Region" value="Region del documento" class="pt-2" />
+                            <InputLabel for="Region" value="Región del documento" class="pt-2" />
                             <div class=" align-middle justify-evenly space-x-2">
 
                                 <div class="flex flex-auto justify-evenly">
@@ -554,21 +557,21 @@ const limpiar = () => {
                             <InputError class="mt-2" :message="formEdit.errors.Region" />
 
                             <div v-if="formEdit.Region == 'Interno'">
-                                <InputLabel for="Departamento" value="Departamento" class="pt-2" />
+                                <InputLabel for="Departamento" value="Departamento del documento" class="pt-2" />
                                 <v-select type="text" id="Departamento" label="nombreDepartamento"
                                     placeholder="Introduce el departamento del que proviene" :options="departamentos"
                                     :filterable="true" v-model="formEdit.Departamento" class="border-white" />
                                 <InputError class="mt-2" :message="formEdit.errors.Departamento" />
                             </div>
                             <div v-if="formEdit.Region == 'Externo'">
-                                <InputLabel for="Dependencia" value="Dependencia" class="pt-2" />
+                                <InputLabel for="Dependencia" value="Dependencia del documento" class="pt-2" />
                                 <TextInput id="Dependencia" type="text" class="mt-1 block w-full" required
                                     v-model="formEdit.Dependencia" />
                                 <InputError class="mt-2" :message="formEdit.errors.Dependencia" />
                             </div>
 
                             <div v-if="formEdit.Region == 'Interno'" class=" align-middle justify-evenly space-x-2">
-                                <InputLabel for="Estatus" value="Estatus" class="" />
+                                <InputLabel for="Estatus" value="Seleccione le estatus del documento" class="" />
                                 <div class="flex flex-auto justify-evenly">
                                     <input type="radio" id="proceso" value="En proceso" v-model="formEdit.Estatus" />
                                     <label for="Interno">En proceso</label>
@@ -586,7 +589,7 @@ const limpiar = () => {
                                     v-model="formEdit.FechaEntrega" />
                                 <InputError class="mt-2" :message="formEdit.errors.FechaEntrega" />
                             </div>
-                            <InputLabel for="periodoEscolar" value="PeriodoEscolar" class="pt-2" />
+                            <InputLabel for="periodoEscolar" value="Seleccione el período escolar" class="pt-2" />
                             <v-select type="text" id="periodoEscolar" label="generalInfo"
                                 placeholder="Periodo escolar al que pertenece" :options="periodos_escolares"
                                 :filterable="true" v-model="formEdit.PeriodoEscolar" class="border-white" />
@@ -598,7 +601,7 @@ const limpiar = () => {
                             </div>
 
                             <InputLabel for="archivo"
-                                value="Si desea actualizar el archivo ingrese un nuevo archivo.(peso max. 5MB)"
+                                value="Si desea actualizar el archivo ingrese un nuevo archivo.(peso máx. 5MB)"
                                 class="pt-2 text-l font-semibold text-center text-red-500" />
                             <div class="space-y-2">
                                 <TextInput id="Archivo" type="file" class="mt-1 block w-full" accept="application/pdf"
@@ -642,15 +645,15 @@ const limpiar = () => {
                 <!-- Contenido de la pagina -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4 space-y-2">
 
-                    <div class="text-gray-900 text-xl border-b-2 border-gray-400 text-center">Parametros para filtrar
+                    <div class="text-gray-900 text-xl border-b-2 border-gray-400 text-center">Parámetros para filtrar
                     </div>
                     <div class="flex flex-row content-end justify-end">
                         <div :hidden="!show_filtros" class="space-x-2">
-                            <SecondaryButton id="btn_limpiarFiltros">Limpiar filtros</SecondaryButton>
-                            <SecondaryButton @click="show_filtros = false">Ocultar filtros</SecondaryButton>
+                            <SecondaryButton id="btn_limpiarFiltros" class="bg-blue-300 hover:bg-blue-700 hover:text-white">Limpiar filtros</SecondaryButton>
+                            <SecondaryButton @click="show_filtros = false" class="bg-green-400 hover:bg-green-700 hover:text-white">Ocultar filtros</SecondaryButton>
                         </div>
                         <div :hidden="show_filtros">
-                            <SecondaryButton @click="show_filtros = true">Mostrar filtros</SecondaryButton>
+                            <SecondaryButton @click="show_filtros = true" class="bg-green-300 hover:bg-green-700 hover:text-white">Mostrar filtros</SecondaryButton>
                         </div>
                     </div>
 
@@ -662,55 +665,69 @@ const limpiar = () => {
                                     data-index="7" class="w-full" v-model="form.TipoDocumento" />
                             </div>
                             <div class="flex flex-col w-full">
-                                <InputLabel for="Departamento" value="Departamento o Dependencia" class="pt-2" />
+                                <InputLabel for="Departamento" value="Departamento o dependencia" class="pt-2" />
                                 <TextInput type="text" placeholder="Escribe el departamento o dependencia"
                                     id="inpt_dpto_dpencia" data-index="6" class="w-full" v-model="form.DptoDpencia" />
                             </div>
                             <div class="flex flex-col w-full">
-                                <InputLabel for="PeriodoEscolar" value="Periodo Escolar" class="pt-2" />
-                                <TextInput type="text" placeholder="Escribe el periodo. Ejemplo: 'ENE-JUN 2024'"
+                                <InputLabel for="PeriodoEscolar" value="Período escolar" class="pt-2" />
+                                <TextInput type="text" placeholder="Escribe el período. Ejemplo: 'ENE-JUN 2024'"
                                     id="inpt_periodo" data-index="8" class="w-full" v-model="form.PeriodoEscolar" />
                             </div>
                         </div>
-                        <div class=" align-middle justify-evenly space-x-2">
-                            <InputLabel for="Estatus" value="Estatus" class="" />
-                            <div class="flex flex-auto justify-evenly">
-                                <label for="Todos">Todos</label>
-                                <input type="radio" id="ipt_todos_estatus" value="Todos" v-model="form.Estatus"
-                                    data-index="1" />
-                                <label for="Interno">En proceso</label>
-                                <input type="radio" id="ipt_proceso" value="En proceso" v-model="form.Estatus"
-                                    data-index="1" />
-                                <label for="Externo">Entregado</label>
-                                <input type="radio" id="ipt_entregado" value="Entregado" v-model="form.Estatus"
-                                    data-index="1" />
-
+                        <div class="md:flex md:flex-row justify-evenly p-3 space-x-5">
+                            <div class=" align-middle justify-evenly space-x-2 w-full">
+                                <InputLabel for="Estatus" value="Estatus" class="" />
+                                <div class="flex flex-auto justify-evenly">
+                                    <div class="space-x-2">
+                                        <label for="Todos">Todos</label>
+                                    <input type="radio" id="ipt_todos_estatus" value="Todos" v-model="form.Estatus"
+                                        data-index="1" />
+                                    </div>
+                                    <div class="space-x-2">
+                                        <label for="Interno">En proceso</label>
+                                    <input type="radio" id="ipt_proceso" value="En proceso" v-model="form.Estatus"
+                                        data-index="1" />
+                                    </div>
+                                    <div class="space-x-2">
+                                        <label for="Externo">Entregado</label>
+                                    <input type="radio" id="ipt_entregado" value="Entregado" v-model="form.Estatus"
+                                        data-index="1" />
+                                    </div>
+                                    
+    
+                                </div>
+                                <div class="text-end block font-medium text-sm text-gray-700">Seleccionó: {{
+                                    form.Estatus }}</div>
                             </div>
-                            <div class="text-end block font-medium text-sm text-gray-700">Seleccionó: {{
-                                form.Estatus }}</div>
-                        </div>
-
-                        <InputLabel for="Region" value="Region del documento" class="pt-2" />
-                        <div class=" align-middle justify-evenly space-x-2">
-
-                            <div class="flex flex-auto justify-evenly">
-                                <label for="Todos">Todos</label>
-                                <input type="radio" id="ipt_todos_region" value="Todos" v-model="form.Region"
-                                    data-index="5" />
-
-                                <label for="Interno">Interno</label>
-                                <input type="radio" id="ipt_interno" value="Interno" v-model="form.Region"
-                                    data-index="5" />
-
-                                <label for="Externo">Externo</label>
-                                <input type="radio" id="ipt_externo" value="Externo" v-model="form.Region"
-                                    data-index="5" />
-
+                            
+                            <div class=" align-middle justify-evenly space-x-2 w-full">
+                                <InputLabel for="Region" value="Región del documento" class="pt-2" />
+                                <div class="flex flex-auto justify-evenly">
+                                    <div class="space-x-2">
+                                        <label for="Todos">Todos</label>
+                                        <input type="radio" id="ipt_todos_region" value="Todos" v-model="form.Region"
+                                        data-index="5" />
+                                    </div>
+                                    
+                                    <div class="space-x-2">
+                                        <label for="Interno">Interno</label>
+                                        <input type="radio" id="ipt_interno" value="Interno" v-model="form.Region"
+                                        data-index="5" />
+                                    </div>
+                                    
+                                    <div class="space-x-2">
+                                        <label for="Externo">Externo</label>
+                                    <input type="radio" id="ipt_externo" value="Externo" v-model="form.Region"
+                                        data-index="5" />
+                                    </div>
+                                </div>
+                                <div class="text-end block font-medium text-sm text-gray-700">Seleccionó: {{
+                                    form.Region
+                                }}</div>
                             </div>
-                            <div class="text-end block font-medium text-sm text-gray-700">Seleccionó: {{
-                                form.Region
-                            }}</div>
                         </div>
+                        
                     </div>
                 </div>
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4 space-y-2">

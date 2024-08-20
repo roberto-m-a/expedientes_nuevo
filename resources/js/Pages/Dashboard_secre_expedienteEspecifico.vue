@@ -51,8 +51,26 @@ const options = {
     order: [[0, "desc"]],
     responsive: true,
     autoWidth: true,
+    dom: '<"md:flex md:flex-row flex flex-col items-center pb-2 pt-2"<"flex items-center"l><"md:ml-auto"f>>rt<"lg:flex lg:flex-row flex flex-col justify-between text-center items-center pt-2"ip>',
     language: {
-        "url": "https://cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json"
+        "decimal": "",
+            "emptyTable": "No hay documentos",
+            "info": "Mostrando del documento _START_ al documento _END_ de un total de _TOTAL_ documentos",
+            "infoEmpty": "No hay documentos para mostrar",
+            "infoFiltered": "(Filtrado de _MAX_ documentos)",
+            "infoPostFix": "",
+            "thousands": ",",
+            "lengthMenu": "Mostrar _MENU_ documentos",
+            "loadingRecords": "Cargando...",
+            "processing": "Procesando...",
+            "search": "Buscar:",
+            "zeroRecords": "Sin documentos encontrados",
+            "paginate": {
+                "first": "Primero",
+                "last": "Último",
+                "next": "Siguiente",
+                "previous": "Anterior"
+            },
     }
 };
 
@@ -61,10 +79,13 @@ const columns = [
     { data: 'Titulo' },
     { data: null, render: function (data, type, row, meta) {
             return (data.fechaEntrega == null) ?
-                `En proceso: <button class="entregarDocumento flex flex-items justify-center bg-green-400 hover:bg-green-600 text-black font-semibold hover:text-white py-2 px-4 hover:border-transparent rounded" data-id="${row.IdDocumento}">
+                `En proceso:
+                    <div class=" flex justify-center">
+                        <button class="entregarDocumento flex flex-items justify-center bg-green-400 hover:bg-green-600 text-black font-semibold hover:text-white py-2 px-4 hover:border-transparent rounded" data-id="${row.IdDocumento}">
                     <svg class="h-5 w-5 text-black"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round">  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />  <polyline points="22 4 12 14.01 9 11.01" /></svg>
                     Entregar
                 </button>
+                </div>
             </div>`
                 : 'Entregado el: \t' + data.fechaEntrega;
         }, },
@@ -301,6 +322,7 @@ onMounted(() => {
         const documento = props.documentosDocente.find(a => a.IdDocumento === formEdit.IdDocumento);
         formEdit.Titulo = documento.Titulo;
         formEdit.URL = documento.URL;
+        formEdit.FechaExpedicion = documento.fechaExpedicion;
     });
 });
 //Metodo para limpiar los valores del input y del formulario
@@ -332,18 +354,21 @@ const limpiar = () => {
                     <DangerButton @click="abrirEntrega = false; formEdit.reset()">X</DangerButton>
                 </div>
                 <form @submit.prevent="entregarDocumento">
+                    <InputLabel for="FechaExpedicion" value="Fecha de expedición" class="pt-2" />
+                    <InputLabel for="FechaExpedicion" :value="formEdit.FechaExpedicion" class="pt-2 font-semibold text-xl" />
                     <InputLabel for="FechaEntrega" value="Fecha de entrega" class="pt-2" />
                     <TextInput id="FechaEntrega" type="date" :min="formEdit.FechaExpedicion" :max="fechaActual"
                         class="mt-1 block w-full" required v-model="formEdit.FechaEntrega" />
                     <InputError class="mt-2" :message="formEdit.errors.FechaEntrega" />
 
-                    <p class="font-bold text-xl text-center">Vista del documento subido</p>
-                    <div class="flex justify-center">
+                    <p class="hidden sm:flex font-bold text-xl sm:text-center sm:justify-center">Vista del documento subido</p>
+                    <p class="sm:hidden justify-center text-center font-semibold">Las vistas previas no son soportadas en dispositivos móviles</p>
+                    <div class="hidden sm:flex justify-center">
                         <iframe :src="formEdit.URL" frameborder="0" class="w-full h-60"></iframe>
                     </div>
 
                     <InputLabel for="archivo"
-                        value="Si desea actualizar el archivo ingrese un nuevo archivo.(peso max. 5MB)"
+                        value="Si desea actualizar el archivo ingrese un nuevo archivo.(peso máx. 5MB)"
                         class="pt-2 text-l font-semibold text-center text-red-500" />
                     <div class="space-y-2">
                         <TextInput id="Archivo" type="file" class="mt-1 block w-full" accept="application/pdf"
@@ -364,8 +389,8 @@ const limpiar = () => {
                     <div v-show="formEdit.Archivo != ''"
                         class="justify-items-center content-center p-2 text-gray-900 space-y-4">
                         <InputLabel for="vistaPrevia" value="Vista previa del nuevo documento"
-                            class="text-center text-xl" />
-                        <div class="flex justify-center">
+                            class="hidden sm:flex sm:text-center sm:justify-center text-xl" />
+                        <div class="hidden sm:flex justify-center">
                             <embed id="vistaPrevia" type="application/pdf" class="bg-gray-700 w-full h-60">
                         </div>
                         <InputLabel v-if="formEdit.Archivo == ''" for="vistaPrevia" value="Aún no se ha subido nada"
@@ -393,20 +418,20 @@ const limpiar = () => {
 
                 <form @submit.prevent="editarDocumento" class="flex-row" enctype="multipart/form-data">
 
-                    <InputLabel for="tipoDocumento" value="¿Qué tipo de documento es?" class="pt-2" />
+                    <InputLabel for="tipoDocumento" value="Seleccione el tipo de documento" class="pt-2" />
                     <v-select type="text" id="tipoDocumento" label="nombreTipoDoc"
                         placeholder="Introduce el tipo de documento" :options="tipo_documentos" :filterable="true"
                         v-model="formEdit.TipoDocumento" class="border-white" />
                     <InputError class="mt-2" :message="formEdit.errors.TipoDocumento" />
 
-                    <InputLabel for="Titulo" value="Titulo" class="pt-2" />
+                    <InputLabel for="Título" value="Título del documento" class="pt-2" />
                     <TextInput id="Titulo" type="text" class="mt-1 block w-full" required v-model="formEdit.Titulo" />
                     <InputError class="mt-2" :message="formEdit.errors.Titulo" />
                     <InputLabel for="FechaExpedicion" value="Fecha de expedición" class="pt-2" />
                     <TextInput id="FechaExpedición" type="date" :max="fechaActual" class="mt-1 block w-full" required
                         v-model="formEdit.FechaExpedicion" />
                     <InputError class="mt-2" :message="formEdit.errors.FechaExpedicion" />
-                    <InputLabel for="Region" value="Region del documento" class="pt-2" />
+                    <InputLabel for="Region" value="Región del documento" class="pt-2" />
                     <div class=" align-middle justify-evenly space-x-2">
 
                         <div class="flex flex-auto justify-evenly">
@@ -425,21 +450,21 @@ const limpiar = () => {
                     <InputError class="mt-2" :message="formEdit.errors.Region" />
 
                     <div v-if="formEdit.Region == 'Interno'">
-                        <InputLabel for="Departamento" value="Departamento" class="pt-2" />
+                        <InputLabel for="Departamento" value="Departamento del documento" class="pt-2" />
                         <v-select type="text" id="Departamento" label="nombreDepartamento"
                             placeholder="Introduce el departamento del que proviene" :options="departamentos"
                             :filterable="true" v-model="formEdit.Departamento" class="border-white" />
                         <InputError class="mt-2" :message="formEdit.errors.Departamento" />
                     </div>
                     <div v-if="formEdit.Region == 'Externo'">
-                        <InputLabel for="Dependencia" value="Dependencia" class="pt-2" />
+                        <InputLabel for="Dependencia" value="Dependencia del documento" class="pt-2" />
                         <TextInput id="Dependencia" type="text" class="mt-1 block w-full" required
                             v-model="formEdit.Dependencia" />
                         <InputError class="mt-2" :message="formEdit.errors.Dependencia" />
                     </div>
 
                     <div v-if="formEdit.Region == 'Interno'" class=" align-middle justify-evenly space-x-2">
-                        <InputLabel for="Estatus" value="Estatus" class="" />
+                        <InputLabel for="Estatus" value="Seleccione el estatus del documento" class="" />
                         <div class="flex flex-auto justify-evenly">
                             <input type="radio" id="proceso" value="En proceso" v-model="formEdit.Estatus" />
                             <label for="Interno">En proceso</label>
@@ -456,19 +481,20 @@ const limpiar = () => {
                             class="mt-1 block w-full" required v-model="formEdit.FechaEntrega" />
                         <InputError class="mt-2" :message="formEdit.errors.FechaEntrega" />
                     </div>
-                    <InputLabel for="periodoEscolar" value="PeriodoEscolar" class="pt-2" />
+                    <InputLabel for="periodoEscolar" value="Seleccione el período escolar" class="pt-2" />
                     <v-select type="text" id="periodoEscolar" label="generalInfo"
                         placeholder="Periodo escolar al que pertenece" :options="periodos_escolares" :filterable="true"
                         v-model="formEdit.PeriodoEscolar" class="border-white" />
                     <InputError class="mt-2" :message="formEdit.errors.PeriodoEscolar" />
 
-                    <p class="font-bold text-xl text-center">Vista del documento subido</p>
-                    <div class="flex justify-center">
+                    <p class="hidden sm:flex font-bold text-xl sm:text-center sm:justify-center">Vista del documento subido</p>
+                    <p class="sm:hidden justify-center text-center font-semibold">Las vistas previas no son soportadas en dispositivos móviles</p>
+                    <div class="hidden sm:flex justify-center">
                         <iframe :src="formEdit.URL" frameborder="0" class="w-full h-60"></iframe>
                     </div>
 
                     <InputLabel for="archivo"
-                        value="Si desea actualizar el archivo ingrese un nuevo archivo.(peso max. 5MB)"
+                        value="Si desea actualizar el archivo ingrese un nuevo archivo.(peso máx. 5MB)"
                         class="pt-2 text-l font-semibold text-center text-red-500" />
                     <div class="space-y-2">
                         <TextInput id="Archivo" type="file" class="mt-1 block w-full" accept="application/pdf"
@@ -489,8 +515,8 @@ const limpiar = () => {
                     <div v-show="formEdit.Archivo != ''"
                         class="justify-items-center content-center p-2 text-gray-900 space-y-4">
                         <InputLabel for="vistaPrevia" value="Vista previa del nuevo documento"
-                            class="text-center text-xl" />
-                        <div class="flex justify-center">
+                            class="hidden sm:flex sm:text-center sm:justify-center text-xl" />
+                        <div class="hidden sm:flex justify-center">
                             <embed id="vistaPrevia" type="application/pdf" class="bg-gray-700 w-full h-60">
                         </div>
                         <InputLabel v-if="formEdit.Archivo == ''" for="vistaPrevia" value="Aún no se ha subido nada"
@@ -519,28 +545,36 @@ const limpiar = () => {
                         <thead>
                             <tr class="border-2 bg-gray-200 border-black">
                                 <th
-                                    class="py-2 px-4 font-bold uppercase text-sm text-center border-2 border-black hover:bg-gray-300">
+                                    style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
                                     Expedida</th>
                                 <th
-                                    class="py-2 px-4 font-bold uppercase text-sm text-center border-2 border-black hover:bg-gray-300">
-                                    Titulo</th>
+                                    style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
+                                    Título</th>
                                 <th
-                                    class="py-2 px-4 font-bold uppercase text-sm text-center border-2 border-black hover:bg-gray-300">
+                                    style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
                                     Estatus</th>
                                 <th
-                                    class="py-2 px-4 font-bold uppercase text-sm text-center border-2 border-black hover:bg-gray-300">
-                                    Region</th>
+                                    style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
+                                    Región</th>
                                 <th
-                                    class="py-2 px-4 font-bold uppercase text-sm text-center border-2 border-black hover:bg-gray-300">
+                                    style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
                                     dpto./dpncia.</th>
                                 <th
-                                    class="py-2 px-4 font-bold uppercase text-sm text-center border-2 border-black hover:bg-gray-300">
-                                    TipoDoc</th>
+                                    style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
+                                    Tipo</th>
                                 <th
-                                    class="py-2 px-4 font-bold uppercase text-sm text-center border-2 border-black hover:bg-gray-300">
-                                    Periodo</th>
+                                    style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
+                                    Período</th>
                                 <th
-                                    class="py-2 px-4 font-bold uppercase text-sm text-center border-2 border-black hover:bg-gray-300">
+                                    style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
                                     Acciones</th>
                             </tr>
                         </thead>

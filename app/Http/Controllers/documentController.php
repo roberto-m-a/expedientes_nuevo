@@ -7,6 +7,7 @@ use App\Models\Departamento;
 use App\Models\Docente;
 use App\Models\document;
 use App\Models\expediente;
+use App\Models\modificacion;
 use App\Models\PeriodoEscolar;
 use App\Models\Personal;
 use App\Models\Secretaria;
@@ -176,6 +177,9 @@ class documentController extends Controller
         $documento = document::where('IdDocumento', $request->IdDocumento)->first();
         //dd($documento);
         $expediente = expediente::where('IdExpediente', $documento->IdExpediente)->first();
+        // Clonar el documento original
+        $documentoOriginal = clone $documento;
+        $cambioExpediente = '';
         if ($request->Archivo != '') {
             $nombreArchivo = explode('documents/', $documento->URL);
             if (Storage::exists('public/documents/' . $nombreArchivo[1])) {
@@ -192,9 +196,13 @@ class documentController extends Controller
         if ($expediente->IdExpediente != $request->Expediente['IdExpediente']) {
             $expediente->numDocumentos = $expediente->numDocumentos - 1;
             $expediente->save();
-            $nuevoExpediente = expediente::where('IdExpediente', $documento->IdExpediente)->first();
+            $nuevoExpediente = expediente::where('IdExpediente', $request->Expediente['IdExpediente'])->first();
             $nuevoExpediente->numDocumentos = $nuevoExpediente->numDocumentos + 1;
             $nuevoExpediente->save();
+            $cambioExpediente = $cambioExpediente.' ,Expediente: '.
+            $expediente->docente->personal->Nombre.' '.$expediente->docente->personal->Apellidos.' => '.
+            $nuevoExpediente->docente->personal->Nombre.' '.$nuevoExpediente->docente->personal->Apellidos
+            ;
         }
         $documento->Titulo = $request->Titulo;
         $documento->FechaExpedicion = $request->FechaExpedicion;
@@ -208,8 +216,40 @@ class documentController extends Controller
         $documento->Dependencia = ($request->Region == 'Interno') ? '' : $request->Dependencia;
 
         $documento->save();
-    }
 
+        // Detectar cambios comparando con el documento original
+        $cambios = [];
+        foreach ($documentoOriginal->getAttributes() as $key => $value) {
+            if ($documento->$key != $value) {
+                $cambios[$key] = ['original' => $value, 'nuevo' => $documento->$key];
+            }
+        }
+
+        //dd($cambios); // Aquí se muestran los cambios detectados
+        $arrayAsString = $this->arrayToString($cambios).$cambioExpediente;
+
+        $user = User::find(Auth::user()->id);
+
+        $modificacion = modificacion::create([
+            'Nombre' => $user->personal->Nombre,
+            'Apellidos' => $user->personal->Apellidos,
+            'Titulo' => $request->Titulo,
+            'Modificaciones' =>$arrayAsString,
+            'IdDocumento' => $documento->IdDocumento,
+            'IdUsuario' => $user->id,
+        ]);
+    }
+    function arrayToString($array) {
+        $result = [];
+        foreach ($array as $key => $value) {
+            if (is_array($value)) {
+                $value = implode('=> ', $value); // Convertir el array interno a string
+            }
+            $result[] = "$key: $value";
+        }
+        return implode(', ', $result);
+    }
+    
     public function validarDocumento(Request  $request)
     {
         $request->validate([

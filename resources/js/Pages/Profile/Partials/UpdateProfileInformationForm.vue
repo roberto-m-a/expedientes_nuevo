@@ -41,7 +41,7 @@ const form = useForm({
             <h2 class="text-lg font-medium text-gray-900">Información de perfil</h2>
 
             <p class="mt-1 text-sm text-gray-600">
-                Actualiza tu Información de perfil y tu correo electronico.
+                Actualiza tu Información de perfil y tu correo electrónico.
             </p>
         </header>
 
@@ -66,11 +66,15 @@ const form = useForm({
             <div>
                 <InputLabel for="Estatus" value="Sexo" class="" />
                 <div class="flex flex-auto justify-evenly">
-                    <input type="radio" id="Hombre" value="Hombre" v-model="form.Sexo" />
-                    <label for="Hombre">Hombre</label>
-
-                    <input type="radio" id="entregado" value="Mujer" v-model="form.Sexo" />
-                    <label for="Mujer">Mujer</label>
+                    <div class="space-x-2">
+                        <label for="Hombre">Hombre</label>
+                        <input type="radio" id="Hombre" value="Hombre" v-model="form.Sexo" />
+                    </div>
+                    <div class="space-x-2">
+                        <label for="Mujer">Mujer</label>
+                        <input type="radio" id="entregado" value="Mujer" v-model="form.Sexo" />
+                    </div>
+                    
                 </div>
                 <div class="text-end block font-medium text-sm text-gray-700">Seleccionó: {{
             form.Sexo }}</div>
@@ -82,16 +86,8 @@ const form = useForm({
                     v-model="form.Departamento" class="border-white" />
                 <InputError class="mt-2" :message="form.errors.Departamento" />
             </div>
-            <!-- <div>
-                <InputLabel for="Departamento" value="Departamento" class=""/>
-                    <select id="Departamento" v-model="form.Departamento" class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-                        <option v-for="departamento in departamentos" :key="departamento.IdDepartamento" :value="departamento.IdDepartamento">
-                            {{ departamento.nombreDepartamento }} 
-                        </option>
-                    </select>
-            </div> -->
             <div>
-                <InputLabel for="email" value="Correo electronico" />
+                <InputLabel for="email" value="Correo electrónico" />
 
                 <TextInput id="email" type="email" class="mt-1 block w-full" v-model="form.email" required
                     autocomplete="username" />
@@ -101,15 +97,15 @@ const form = useForm({
 
             <div v-if="mustVerifyEmail && user.email_verified_at === null">
                 <p class="text-sm mt-2 text-gray-800">
-                    Tu correo electronico no esta verificado.
+                    Tu correo electrónico no esta verificado.
                     <Link :href="route('verification.send')" method="post" as="button"
                         class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    Clic aqui para re-enviar el correo de verificacion.
+                    Clic aquí para re-enviar el correo de verificacion.
                     </Link>
                 </p>
 
                 <div v-show="status === 'verification-link-sent'" class="mt-2 font-medium text-sm text-green-600">
-                    Un nuevo link de verificacion ha sido enviado a tu correo electronico.
+                    Un nuevo link de verificación ha sido enviado a tu correo electrónico.
                 </div>
             </div>
 

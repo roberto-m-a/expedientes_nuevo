@@ -20,11 +20,29 @@ DataTable.use(DataTablesLib);
 
 const options = {
     order: [[0, "desc"]],
-    select: true,
+    select: false,
     responsive: true,
     autoWidth: true,
+    dom: '<"md:flex md:flex-row flex flex-col items-center pb-2 pt-2"<"flex items-center"l><"md:ml-auto"f>>rt<"lg:flex lg:flex-row flex flex-col justify-between text-center items-center pt-2"ip>',
     language: {
-        "url": "https://cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json"
+        "decimal": "",
+            "emptyTable": "No hay períodos escolares",
+            "info": "Mostrando del período _START_ al período _END_ de un total de _TOTAL_ períodos",
+            "infoEmpty": "No hay períodos escolares para mostrar",
+            "infoFiltered": "(Filtrado de _MAX_ períodos escolares)",
+            "infoPostFix": "",
+            "thousands": ",",
+            "lengthMenu": "Mostrar _MENU_ períodos",
+            "loadingRecords": "Cargando...",
+            "processing": "Procesando...",
+            "search": "Buscar:",
+            "zeroRecords": "Sin períodos encontrados",
+            "paginate": {
+                "first": "Primero",
+                "last": "Último",
+                "next": "Siguiente",
+                "previous": "Anterior"
+            },
     }
 };
 
@@ -36,20 +54,20 @@ const columns = [
         data: null, render: function (data, type, row, meta) {
             return (data.numDocumentos == 0) ?
                 `<div class=" flex justify-center space-x-1">
-                <button class="EditarPeriodo flex flex-items justify-center bg-blue-400 hover:bg-blue-800 text-black font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded" data-id="${row.IdPeriodoEscolar}">
+                <button title='Editar período escolar' class="EditarPeriodo flex flex-items justify-center bg-blue-400 hover:bg-blue-800 text-black font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded" data-id="${row.IdPeriodoEscolar}">
                     <svg class="h-5 w-5 text-black"  viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">  <path stroke="none" d="M0 0h24v24H0z"/>  <path d="M9 7 h-3a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-3" />  <path d="M9 15h3l8.5 -8.5a1.5 1.5 0 0 0 -3 -3l-8.5 8.5v3" />  <line x1="16" y1="5" x2="19" y2="8" /></svg>
-                    Editar
+                    
                 </button>
-                <button class="BorrarPeriodo flex flex-items justify-center bg-red-400 hover:bg-red-600 text-black font-semibold hover:text-white py-2 px-4 border border-red-400 hover:border-transparent rounded" data-id="${row.IdPeriodoEscolar}">
+                <button title='Borrar período escolar' class="BorrarPeriodo flex flex-items justify-center bg-red-400 hover:bg-red-600 text-black font-semibold hover:text-white py-2 px-4 border border-red-400 hover:border-transparent rounded" data-id="${row.IdPeriodoEscolar}">
                     <svg class="h-5 w-5 text-slate-900"  width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">  <path stroke="none" d="M0 0h24v24H0z"/>  <line x1="4" y1="7" x2="20" y2="7" />  <line x1="10" y1="11" x2="10" y2="17" />  <line x1="14" y1="11" x2="14" y2="17" />  <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />  <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>
-                    Borrar
+                    
                 </button>
                 </div>`
                 :
                 `<div class=" flex justify-center space-x-1">
-                <button class="EditarPeriodo flex flex-items justify-center bg-blue-400 hover:bg-blue-800 text-black font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded" data-id="${row.IdPeriodoEscolar}">
+                <button title='Editar período escolar' class="EditarPeriodo flex flex-items justify-center bg-blue-400 hover:bg-blue-800 text-black font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded" data-id="${row.IdPeriodoEscolar}">
                     <svg class="h-5 w-5 text-black"  viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">  <path stroke="none" d="M0 0h24v24H0z"/>  <path d="M9 7 h-3a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-3" />  <path d="M9 15h3l8.5 -8.5a1.5 1.5 0 0 0 -3 -3l-8.5 8.5v3" />  <line x1="16" y1="5" x2="19" y2="8" /></svg>
-                    Editar
+                    
                 </button>
                 </div>`;
         },
@@ -232,16 +250,16 @@ onMounted(() => {
 
 <template>
 
-    <Head title="Periodo Escolar" />
+    <Head title="Período Escolar" />
 
     <AuthenticatedLayout_secretaria :user="user" :personal="personal">
         <template #header>
             <div class="flex flex-row items-end space-x-4">
-                <h2 class="font-semibold text-2xl text-black leading-tight">Periodos escolares</h2>
-                <h2 class="text-gray-500 font-semibold">Agrega, edita y borra periodos escolares</h2>
+                <h2 class="font-semibold text-2xl text-black leading-tight">Períodos escolares</h2>
+                <h2 class="text-gray-500 font-semibold">Agrega, edita y borra períodos escolares</h2>
             </div>
         </template>
-        <!-- Modal para editar el tipo de documento seleccionado -->
+        <!-- Modal para editar el período escolar seleccionado -->
         <Modal :show='abrirEdit'>
             <div class="p-8 flex flex-col space-y-4">
                 <div class="flex flex-row-reverse items-end justify-between overflow-hidden">
@@ -249,15 +267,15 @@ onMounted(() => {
                 </div>
                 <div>
                     <p>
-                        Edita los datos del periodo escolar seleccionado
+                        Edita los datos del período escolar seleccionado
                     </p>
                     <form @submit.prevent="editarPeriodoEscolar">
                         <div class="space-y-2">
-                            <InputLabel for="fechaInicio" value="fecha de inicio" class="" />
+                            <InputLabel for="fechaInicio" value="Fecha de inicio" class="" />
                             <TextInput id="fechaInicio" type="date" class="block w-full" v-model="formEdit.fechaInicio"
                                 required />
                             <InputError class="mt-2" :message="formEdit.errors.fechaInicio" />
-                            <InputLabel for="fechaTermino" value="Fecha de termino" class="" />
+                            <InputLabel for="fechaTermino" value="Fecha de término" class="" />
                             <TextInput id="fechaTermino" type="date" class="block w-full"
                                 v-model="formEdit.fechaTermino" required />
                             <InputError class="mt-2" :message="formEdit.errors.fechaTermino" />
@@ -274,7 +292,7 @@ onMounted(() => {
                 </div>
             </div>
         </Modal>
-        <!-- Modal para agregar un nuevo periodo escolar -->
+        <!-- Modal para agregar un nuevo período escolar -->
         <Modal :show='abrir'>
             <div class="p-8 flex flex-col space-y-4">
                 <div class="flex flex-row-reverse items-end justify-between overflow-hidden">
@@ -282,15 +300,15 @@ onMounted(() => {
                 </div>
                 <div>
                     <p>
-                        Favor de rellenar los campos para registrar un nuevo periodo escolar.
+                        Favor de rellenar los campos para registrar un nuevo período escolar.
                     </p>
                     <form @submit.prevent="nuevoPeriodoEscolar">
                         <div class="space-y-2">
-                            <InputLabel for="fechaInicio" value="fecha de inicio" class="" />
+                            <InputLabel for="fechaInicio" value="Fecha de inicio" class="" />
                             <TextInput id="fechaInicio" type="date" class="block w-full" v-model="form.fechaInicio"
                                 required />
                             <InputError class="mt-2" :message="form.errors.fechaInicio" />
-                            <InputLabel for="fechaTermino" value="Fecha de termino" class="" />
+                            <InputLabel for="fechaTermino" value="Fecha de término" class="" />
                             <TextInput id="fechaTermino" type="date" class="block w-full" v-model="form.fechaTermino"
                                 required />
                             <InputError class="mt-2" :message="form.errors.fechaTermino" />
@@ -311,7 +329,7 @@ onMounted(() => {
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4 space-y-3">
                     <div class="flex flex-auto justify-end">
                         <AddButton @click="abrir = true">
-                            Agregar nuevo periodo escolar
+                            Agregar nuevo período escolar
                         </AddButton>
                     </div>
                     <DataTable id="TablaPeriodos"
@@ -320,16 +338,20 @@ onMounted(() => {
                         <thead>
                             <tr class="border-2 bg-gray-200 border-black">
                                 <th
-                                    class="py-2 px-4 font-bold uppercase text-xl text-center border-2 border-black hover:bg-gray-300">
-                                    Fecha Inicio</th>
+                                    style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
+                                    Fecha de inicio</th>
                                 <th
-                                    class="py-2 px-4 font-bold uppercase text-xl text-center border-2 border-black hover:bg-gray-300">
-                                    Fecha Termino</th>
+                                    style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
+                                    Fecha de término</th>
                                 <th
-                                    class="py-2 px-4 font-bold uppercase text-xl text-center border-2 border-black hover:bg-gray-300">
-                                    Nombre</th>
+                                    style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
+                                    Nombre corto</th>
                                 <th
-                                    class="py-2 px-4 font-bold uppercase text-xl text-center border-2 border-black hover:bg-gray-300">
+                                    style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
                                     Acciones</th>
                             </tr>
                         </thead>

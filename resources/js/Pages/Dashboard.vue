@@ -108,7 +108,7 @@ const dataset = [
                         Para continuar con tu registro, por favor ingresa una contraseña.
                     </p>
                     <p>
-                        Debe de contener minimo una minuscula, una mayuscula, un numero, un simbolo y tener entre 8 y 18
+                        Debe de contener mínimo una minúscula, una mayúscula, un número, un símbolo y tener entre 8 y 18
                         caracteres.
                     </p>
                     <InputLabel for="password" value="Contraseña" class="pt-2" />

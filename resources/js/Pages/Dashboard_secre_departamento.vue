@@ -22,8 +22,26 @@ const options = {
     select: false,
     responsive: true,
     autoWidth: true,
+    dom: '<"md:flex md:flex-row flex flex-col items-center pb-2 pt-2"<"flex items-center"l><"md:ml-auto"f>>rt<"lg:flex lg:flex-row flex flex-col justify-between text-center items-center pt-2"ip>',
     language: {
-        "url": "https://cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json"
+        "decimal": "",
+            "emptyTable": "No hay departamentos",
+            "info": "Mostrando del departamento _START_ al departamento _END_ de un total de _TOTAL_ departamentos",
+            "infoEmpty": "No hay departamentos para mostrar",
+            "infoFiltered": "(Filtrado de _MAX_ departamentos)",
+            "infoPostFix": "",
+            "thousands": ",",
+            "lengthMenu": "Mostrar _MENU_ departamentos",
+            "loadingRecords": "Cargando...",
+            "processing": "Procesando...",
+            "search": "Buscar:",
+            "zeroRecords": "Sin departamentos encontrados",
+            "paginate": {
+                "first": "Primero",
+                "last": "Último",
+                "next": "Siguiente",
+                "previous": "Anterior"
+            },
     }
 };
 
@@ -33,20 +51,20 @@ const columns = [
         data: null, render: function (data, type, row, meta) {
             return (data.numDocumentos == 0 && data.numPersonal == 0) ?
                 `<div class=" flex justify-center space-x-1">
-                <button class="EditarDepartamento flex flex-items justify-center bg-blue-400 hover:bg-blue-800 text-black font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded" data-id="${row.IdDepartamento}">
+                <button title='Editar departamento' class="EditarDepartamento flex flex-items justify-center bg-blue-400 hover:bg-blue-800 text-black font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded" data-id="${row.IdDepartamento}">
                     <svg class="h-5 w-5 text-black"  viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">  <path stroke="none" d="M0 0h24v24H0z"/>  <path d="M9 7 h-3a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-3" />  <path d="M9 15h3l8.5 -8.5a1.5 1.5 0 0 0 -3 -3l-8.5 8.5v3" />  <line x1="16" y1="5" x2="19" y2="8" /></svg>
-                    Editar
+                    
                 </button>
-                <button class="BorrarDepartamento flex flex-items justify-center bg-red-400 hover:bg-red-600 text-black font-semibold hover:text-white py-2 px-4 border border-red-400 hover:border-transparent rounded" data-id="${row.IdDepartamento}">
+                <button title='Borrar departamento' class="BorrarDepartamento flex flex-items justify-center bg-red-400 hover:bg-red-600 text-black font-semibold hover:text-white py-2 px-4 border border-red-400 hover:border-transparent rounded" data-id="${row.IdDepartamento}">
                     <svg class="h-5 w-5 text-slate-900"  width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">  <path stroke="none" d="M0 0h24v24H0z"/>  <line x1="4" y1="7" x2="20" y2="7" />  <line x1="10" y1="11" x2="10" y2="17" />  <line x1="14" y1="11" x2="14" y2="17" />  <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />  <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>
-                    Borrar
+                    
                 </button>
                 </div>`
                 :
                 `<div class=" flex justify-center space-x-1">
-                <button class="EditarDepartamento flex flex-items justify-center bg-blue-400 hover:bg-blue-800 text-black font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded" data-id="${row.IdDepartamento}">
+                <button title='Editar departamento' class="EditarDepartamento flex flex-items justify-center bg-blue-400 hover:bg-blue-800 text-black font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded" data-id="${row.IdDepartamento}">
                     <svg class="h-5 w-5 text-black"  viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">  <path stroke="none" d="M0 0h24v24H0z"/>  <path d="M9 7 h-3a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-3" />  <path d="M9 15h3l8.5 -8.5a1.5 1.5 0 0 0 -3 -3l-8.5 8.5v3" />  <line x1="16" y1="5" x2="19" y2="8" /></svg>
-                    Editar
+                    
                 </button>
                 </div>`;
         },
@@ -226,9 +244,10 @@ onMounted(() => {
         <template #header>
             <div class="flex flex-row items-end space-x-4">
                 <h2 class="font-semibold text-2xl text-black leading-tight">Departamentos</h2>
-                <h2 class="text-gray-500 font-semibold">Agrega, edita y borra departametos</h2>
+                <h2 class="text-gray-500 font-semibold">Agrega, edita y borra departamentos</h2>
             </div>
         </template>
+        <!-- Modal para editar el departamento -->
         <Modal :show='abrirEdit'>
             <div class="p-8 flex flex-col space-y-4">
                 <div class="flex flex-row-reverse items-end justify-between overflow-hidden">
@@ -259,7 +278,7 @@ onMounted(() => {
                 </div>
                 <div>
                     <p>
-                        Favor de rellenar el unico campo visible para registrar un nuevo departamento.
+                        Favor de rellenar el único campo visible para registrar un nuevo departamento.
                     </p>
                     <form @submit.prevent="nuevoDepartamento">
                         <InputLabel for="nombreDepartamento" value="Nombre del departamento" class="pt-2" />
@@ -289,10 +308,12 @@ onMounted(() => {
                         <thead>
                             <tr class="border-2 bg-gray-200 border-black">
                                 <th
-                                    class="py-2 px-4 font-bold uppercase text-xl text-center border-2 border-black hover:bg-gray-300">
+                                    style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
                                     Nombre</th>
                                 <th
-                                    class="py-2 px-4 font-bold uppercase text-xl text-center border-2 border-black hover:bg-gray-300">
+                                    style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
                                     Acciones</th>
                             </tr>
                         </thead>

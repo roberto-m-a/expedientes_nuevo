@@ -24,8 +24,26 @@ const options = {
     select: false,
     responsive: true,
     autoWidth: true,
+    dom: '<"md:flex md:flex-row flex flex-col items-center pb-2 pt-2"<"flex items-center"l><"md:ml-auto"f>>rt<"lg:flex lg:flex-row flex flex-col justify-between text-center items-center pt-2"ip>',
     language: {
-        "url": "https://cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json"
+        "decimal": "",
+        "emptyTable": "No hay personal",
+        "info": "Mostrando del personal _START_ al personal _END_ de un total de _TOTAL_ personales",
+        "infoEmpty": "No hay personal para mostrar",
+        "infoFiltered": "(Filtrado de _MAX_ personales)",
+        "infoPostFix": "",
+        "thousands": ",",
+        "lengthMenu": "Mostrar _MENU_ personales",
+        "loadingRecords": "Cargando...",
+        "processing": "Procesando...",
+        "search": "Buscar:",
+        "zeroRecords": "Sin personal encontrado",
+        "paginate": {
+            "first": "Primero",
+            "last": "Último",
+            "next": "Siguiente",
+            "previous": "Anterior"
+        },
     }
 };
 
@@ -54,7 +72,7 @@ const columns = [
 
     {
         data: null, render: function (data, type, row, meta) {
-            return ((data.totalDocumentos <=0 || data.totalDocumentos ==null)  && (data.numDocumentos <=0 || data.numDocumentos == null) )? `<div class=" flex justify-center space-x-1">
+            return ((data.totalDocumentos <= 0 || data.totalDocumentos == null) && (data.numDocumentos <= 0 || data.numDocumentos == null)) ? `<div class=" flex justify-center space-x-1">
                 <button title="Editar personal" class="EditarPersonal flex flex-items justify-center bg-blue-400 hover:bg-blue-800 text-black font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded" data-id="${row.IdPersonal}">
                     <svg class="h-5 w-5 text-black"  viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">  <path stroke="none" d="M0 0h24v24H0z"/>  <path d="M9 7 h-3a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-3" />  <path d="M9 15h3l8.5 -8.5a1.5 1.5 0 0 0 -3 -3l-8.5 8.5v3" />  <line x1="16" y1="5" x2="19" y2="8" /></svg>
                     
@@ -63,8 +81,8 @@ const columns = [
                     <svg class="h-5 w-5 text-slate-900"  width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">  <path stroke="none" d="M0 0h24v24H0z"/>  <line x1="4" y1="7" x2="20" y2="7" />  <line x1="10" y1="11" x2="10" y2="17" />  <line x1="14" y1="11" x2="14" y2="17" />  <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />  <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>
                     
                 </button>
-                </div>` 
-                : 
+                </div>`
+                :
                 `<div class=" flex justify-center space-x-1">
                 <button title="Editar personal" class="EditarPersonal flex flex-items justify-center bg-blue-400 hover:bg-blue-800 text-black font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded" data-id="${row.IdPersonal}">
                     <svg class="h-5 w-5 text-black"  viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">  <path stroke="none" d="M0 0h24v24H0z"/>  <path d="M9 7 h-3a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-3" />  <path d="M9 15h3l8.5 -8.5a1.5 1.5 0 0 0 -3 -3l-8.5 8.5v3" />  <line x1="16" y1="5" x2="19" y2="8" /></svg>
@@ -398,12 +416,14 @@ onMounted(() => {
                     <InputLabel for="Estatus" value="Sexo" />
                     <div>
                         <div class="flex flex-auto justify-evenly">
-                            <label for="Hombre">Hombre</label>
-                            <input type="radio" id="Hombre" value="Hombre" v-model="formEdit.Sexo" />
-
-                            <label for="Mujer">Mujer</label>
-                            <input type="radio" id="entregado" value="Mujer" v-model="formEdit.Sexo" />
-
+                            <div class="space-x-2">
+                                <label for="Hombre">Hombre</label>
+                                <input type="radio" id="Hombre" value="Hombre" v-model="formEdit.Sexo" />
+                            </div>
+                            <div class="space-x-2">
+                                <label for="Mujer">Mujer</label>
+                                <input type="radio" id="entregado" value="Mujer" v-model="formEdit.Sexo" />
+                            </div>
                         </div>
                         <div class="text-end block font-medium text-sm text-gray-700">Seleccionó: {{
                             formEdit.Sexo }}</div>
@@ -468,21 +488,25 @@ onMounted(() => {
                     </p>
                     <form @submit.prevent="nuevoPersonal">
                         <InputLabel for="Nombre" value="Nombre(s)" class="pt-2" />
-                        <TextInput id="Nombre" type="text" class="mt-1 block w-full" v-model="form.Nombre"
-                            required />
+                        <TextInput id="Nombre" type="text" class="mt-1 block w-full" v-model="form.Nombre" required />
                         <InputError class="mt-2" :message="form.errors.Nombre" />
                         <InputLabel for="Apellidos" value="Apellido(s)" class="pt-2" />
-                        <TextInput id="Apellidos" type="text" class="mt-1 block w-full"
-                            v-model="form.Apellidos" required />
+                        <TextInput id="Apellidos" type="text" class="mt-1 block w-full" v-model="form.Apellidos"
+                            required />
                         <InputError class="mt-2" :message="form.errors.Apellidos" />
                         <div>
                             <InputLabel for="Estatus" value="Sexo" class="" />
                             <div class="flex flex-auto justify-evenly">
-                                <label for="Hombre">Hombre</label>
-                                <input type="radio" id="Hombre" value="Hombre" v-model="form.Sexo" />
+                                <div class="space-x-2">
+                                    <label for="Hombre">Hombre</label>
+                                    <input type="radio" id="Hombre" value="Hombre" v-model="form.Sexo" />
+                                </div>
 
-                                <label for="Mujer">Mujer</label>
-                                <input type="radio" id="entregado" value="Mujer" v-model="form.Sexo" />
+                                <div class="space-x-2">
+                                    <label for="Mujer">Mujer</label>
+                                    <input type="radio" id="entregado" value="Mujer" v-model="form.Sexo" />
+                                </div>
+
 
                             </div>
                             <div class="text-end block font-medium text-sm text-gray-700">Seleccionó: {{
@@ -493,8 +517,8 @@ onMounted(() => {
                             <InputLabel for="Departamento" value="Departamento" class="" />
                             <select id="Departamento" v-model="form.Departamento"
                                 class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-                                <option v-for="departamento in departamentos"
-                                    :key="departamento.IdDepartamento" :value="departamento.IdDepartamento">
+                                <option v-for="departamento in departamentos" :key="departamento.IdDepartamento"
+                                    :value="departamento.IdDepartamento">
                                     {{ departamento.nombreDepartamento }}
                                 </option>
                             </select>
@@ -503,25 +527,26 @@ onMounted(() => {
                         <InputLabel for="" value="Selecciona el tipo de personal" />
                         <div>
                             <div class="flex flex-auto justify-evenly">
-                                <label for="Docente">Docente</label>
-                                <input type="radio" id="Docente" value="Docente"
-                                    v-model="form.tipoUsuario" />
-
-                                <label for="Secretaria">Secretaria</label>
-                                <input type="radio" id="Secretaria" value="Secretaria"
-                                    v-model="form.tipoUsuario" />
-
-                                <label for="Administrador">Administrador</label>
-                                <input type="radio" id="Administrador" value="Administrador"
-                                    v-model="form.tipoUsuario" />
-
+                                <div class="space-x-2">
+                                    <label for="Docente">Docente</label>
+                                    <input type="radio" id="Docente" value="Docente" v-model="form.tipoUsuario" />
+                                </div>
+                                <div class="space-x-2">
+                                    <label for="Secretaria">Secretaria</label>
+                                    <input type="radio" id="Secretaria" value="Secretaria" v-model="form.tipoUsuario" />
+                                </div>
+                                <div class="space-x-2">
+                                    <label for="Administrador">Administrador</label>
+                                    <input type="radio" id="Administrador" value="Administrador"
+                                        v-model="form.tipoUsuario" />
+                                </div>
                             </div>
                             <div class="text-end block font-medium text-sm text-gray-700">Seleccionó: {{
                                 form.tipoUsuario }}</div>
                         </div>
                         <InputError class="mt-2" :message="form.errors.Docente" />
-                        <div v-if="form.tipoUsuario== 'Docente'">
-                            <InputLabel for="" value="Grado Academico del docente" />
+                        <div v-if="form.tipoUsuario == 'Docente'">
+                            <InputLabel for="" value="Grado académico del docente" />
                             <select value="" id="GradoAcademico" v-model="form.GradoAcademico"
                                 class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
                                 <option value="Licenciatura">Licenciatura</option>
@@ -535,15 +560,14 @@ onMounted(() => {
                             <InputLabel for="crearUser"
                                 value="Marque la casilla en caso de querer crear un usuario para este personal ->" />
                             <Checkbox v-model:checked="form.crearUsuario" @click="crearUser = !crearUser;"
-                                id="crearUser" value="crearUser" v-model="form.crearUsuario"
-                                class="mt-1 block" />
+                                id="crearUser" value="crearUser" v-model="form.crearUsuario" class="mt-1 block" />
                         </div>
                         <div v-if="form.crearUsuario">
                             <div class="mt-4" oncopy="return false" onpaste="return false">
                                 <InputLabel for="email" value="Correo" />
 
-                                <TextInput id="email" type="email" class="mt-1 block w-full"
-                                    v-model="form.email" required autocomplete="username" />
+                                <TextInput id="email" type="email" class="mt-1 block w-full" v-model="form.email"
+                                    required autocomplete="username" />
 
                                 <InputError class="mt-2" :message="form.errors.email" />
 
@@ -581,26 +605,26 @@ onMounted(() => {
                         :options="options" :columns="columns" :data="$page.props.personal_data">
                         <thead>
                             <tr class="border-2 bg-gray-200 border-black">
-                                <th
-                                    class="py-2 px-4 font-bold uppercase text-l text-center border-2 border-black hover:bg-gray-300">
+                                <th style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
                                     Nombre</th>
-                                <th
-                                    class="py-2 px-4 font-bold uppercase text-l text-center border-2 border-black hover:bg-gray-300">
+                                <th style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
                                     Apellidos</th>
-                                <th
-                                    class="py-2 px-4 font-bold uppercase text-l text-center border-2 border-black hover:bg-gray-300">
+                                <th style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
                                     Sexo</th>
-                                <th
-                                    class="py-2 px-4 font-bold uppercase text-l text-center border-2 border-black hover:bg-gray-300">
+                                <th style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
                                     Email</th>
-                                <th
-                                    class="py-2 px-4 font-bold uppercase text-l text-center border-2 border-black hover:bg-gray-300">
+                                <th style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
                                     Departamento</th>
-                                <th
-                                    class="py-2 px-4 font-bold uppercase text-l text-center border-2 border-black hover:bg-gray-300">
+                                <th style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
                                     Tipo</th>
-                                <th
-                                    class="py-2 px-4 font-bold uppercase text-l text-center border-2 border-black hover:bg-gray-300">
+                                <th style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
                                     Acciones</th>
                             </tr>
                         </thead>

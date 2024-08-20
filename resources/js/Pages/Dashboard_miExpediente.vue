@@ -44,8 +44,26 @@ const options = {
     order: [[0, "desc"]],
     responsive: true,
     autoWidth: true,
+    dom: '<"md:flex md:flex-row flex flex-col items-center pb-2 pt-2"<"flex items-center"l><"md:ml-auto"f>>rt<"lg:flex lg:flex-row flex flex-col justify-between text-center items-center pt-2"ip>',
     language: {
-        "url": "https://cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json"
+        "decimal": "",
+            "emptyTable": "No hay documentos",
+            "info": "Mostrando del documento _START_ al documento _END_ de un total de _TOTAL_ documentos",
+            "infoEmpty": "No hay documentos para mostrar",
+            "infoFiltered": "(Filtrado de _MAX_ documentos)",
+            "infoPostFix": "",
+            "thousands": ",",
+            "lengthMenu": "Mostrar _MENU_ documentos",
+            "loadingRecords": "Cargando...",
+            "processing": "Procesando...",
+            "search": "Buscar:",
+            "zeroRecords": "Sin documentos encontrados",
+            "paginate": {
+                "first": "Primero",
+                "last": "Último",
+                "next": "Siguiente",
+                "previous": "Anterior"
+            },
     }
 };
 
@@ -234,7 +252,7 @@ onMounted(() => {
         <template #header>
             <div class="flex flex-row items-end space-x-4">
                 <h2 class="font-semibold text-2xl text-black leading-tight">Mi expediente</h2>
-                <h2 class="text-gray-500 font-semibold">Ve y edita documentos</h2>
+                <h2 class="text-gray-500 font-semibold">Ve y edita tus documentos</h2>
             </div>
         </template>
         <!-- Modal para editar el documento -->
@@ -246,13 +264,13 @@ onMounted(() => {
                 </div>
 
                 <form @submit.prevent="editarDocumento" class="flex-row" enctype="multipart/form-data">
-                    <InputLabel for="tipoDocumento" value="¿Qué tipo de documento es?" class="pt-2" />
+                    <InputLabel for="tipoDocumento" value="Seleccione el tipo de documento" class="pt-2" />
                     <v-select type="text" id="tipoDocumento" label="nombreTipoDoc"
                         placeholder="Introduce el tipo de documento" :options="tipo_documentos"
                         :filterable="true" v-model="formEdit.TipoDocumento" class="border-white" />
                     <InputError class="mt-2" :message="formEdit.errors.TipoDocumento" />
 
-                    <InputLabel for="Titulo" value="Titulo" class="pt-2" />
+                    <InputLabel for="Titulo" value="Título del documento" class="pt-2" />
                     <TextInput id="Titulo" type="text" class="mt-1 block w-full" required
                         v-model="formEdit.Titulo" />
                     <InputError class="mt-2" :message="formEdit.errors.Titulo" />
@@ -260,17 +278,20 @@ onMounted(() => {
                     <TextInput id="FechaExpedición" type="date" :max="fechaActual" class="mt-1 block w-full"
                         required v-model="formEdit.FechaExpedicion" />
                     <InputError class="mt-2" :message="formEdit.errors.FechaExpedicion" />
-                    <InputLabel for="Region" value="Region del documento" class="pt-2" />
+                    <InputLabel for="Region" value="Región del documento" class="pt-2" />
                     <div class=" align-middle justify-evenly space-x-2">
 
                         <div class="flex flex-auto justify-evenly">
-                            <input @change="controlRegion" type="radio" id="interno" value="Interno"
+                            <div class="space-x-2">
+                                <label for="Interno">Interno</label>
+                                <input @change="controlRegion" type="radio" id="interno" value="Interno"
                                 v-model="formEdit.Region" />
-                            <label for="Interno">Interno</label>
-
-                            <input @change="controlRegion" type="radio" id="externo" value="Externo"
+                            </div>
+                            <div class="space-x-2">
+                                <label for="Externo">Externo</label>
+                                <input @change="controlRegion" type="radio" id="externo" value="Externo"
                                 v-model="formEdit.Region" />
-                            <label for="Externo">Externo</label>
+                            </div>
                         </div>
                         <div class="text-end block font-medium text-sm text-gray-700">Seleccionó: {{
                             formEdit.Region
@@ -279,27 +300,30 @@ onMounted(() => {
                     <InputError class="mt-2" :message="formEdit.errors.Region" />
 
                     <div v-if="formEdit.Region == 'Interno'">
-                        <InputLabel for="Departamento" value="Departamento" class="pt-2" />
+                        <InputLabel for="Departamento" value="Departamento del documento" class="pt-2" />
                         <v-select type="text" id="Departamento" label="nombreDepartamento"
                             placeholder="Introduce el departamento del que proviene" :options="departamentos"
                             :filterable="true" v-model="formEdit.Departamento" class="border-white" />
                         <InputError class="mt-2" :message="formEdit.errors.Departamento" />
                     </div>
                     <div v-if="formEdit.Region == 'Externo'">
-                        <InputLabel for="Dependencia" value="Dependencia" class="pt-2" />
+                        <InputLabel for="Dependencia" value="Dependencia del documento" class="pt-2" />
                         <TextInput id="Dependencia" type="text" class="mt-1 block w-full" required
                             v-model="formEdit.Dependencia" />
                         <InputError class="mt-2" :message="formEdit.errors.Dependencia" />
                     </div>
 
                     <div v-if="formEdit.Region == 'Interno'" class=" align-middle justify-evenly space-x-2">
-                        <InputLabel for="Estatus" value="Estatus" class="" />
+                        <InputLabel for="Estatus" value="Seleccione el estatus del documento" class="" />
                         <div class="flex flex-auto justify-evenly">
-                            <input type="radio" id="proceso" value="En proceso" v-model="formEdit.Estatus" />
-                            <label for="Interno">En proceso</label>
-
-                            <input type="radio" id="entregado" value="Entregado" v-model="formEdit.Estatus" />
-                            <label for="Externo">Entregado</label>
+                            <div class="space-x-2">
+                                <label for="Interno">En proceso</label>
+                                <input type="radio" id="proceso" value="En proceso" v-model="formEdit.Estatus" />
+                            </div>
+                            <div class="space-x-2">
+                                <label for="Externo">Entregado</label>
+                                <input type="radio" id="entregado" value="Entregado" v-model="formEdit.Estatus" />
+                            </div>
                         </div>
                         <div class="text-end block font-medium text-sm text-gray-700">Seleccionó: {{
                             formEdit.Estatus }}</div>
@@ -311,19 +335,20 @@ onMounted(() => {
                             v-model="formEdit.FechaEntrega" />
                         <InputError class="mt-2" :message="formEdit.errors.FechaEntrega" />
                     </div>
-                    <InputLabel for="periodoEscolar" value="PeriodoEscolar" class="pt-2" />
+                    <InputLabel for="periodoEscolar" value="Seleccione el período escolar" class="pt-2" />
                     <v-select type="text" id="periodoEscolar" label="generalInfo"
                         placeholder="Periodo escolar al que pertenece" :options="periodos_escolares"
                         :filterable="true" v-model="formEdit.PeriodoEscolar" class="border-white" />
                     <InputError class="mt-2" :message="formEdit.errors.PeriodoEscolar" />
 
-                    <p class="font-bold text-xl text-center">Vista del documento subido</p>
-                    <div class="flex justify-center">
+                    <p class="hidden sm:flex font-bold text-xl sm:text-center sm:justify-center">Vista del documento subido</p>
+                    <p class="sm:hidden justify-center text-center font-semibold">Las vistas previas no son soportadas en dispositivos móviles</p>
+                    <div class="hidden sm:flex justify-center">
                         <iframe :src="formEdit.URL" frameborder="0" class="w-full h-60"></iframe>
                     </div>
 
                     <InputLabel for="archivo"
-                        value="Si desea actualizar el archivo ingrese un nuevo archivo.(peso max. 5MB)"
+                        value="Si desea actualizar el archivo ingrese un nuevo archivo.(peso máx. 5MB)"
                         class="pt-2 text-l font-semibold text-center text-red-500" />
                     <div class="space-y-2">
                         <TextInput id="Archivo" type="file" class="mt-1 block w-full" accept="application/pdf"
@@ -344,8 +369,9 @@ onMounted(() => {
                     <div v-show="formEdit.Archivo != ''"
                         class="justify-items-center content-center p-2 text-gray-900 space-y-4">
                         <InputLabel for="vistaPrevia" value="Vista previa del nuevo documento"
-                            class="text-center text-xl" />
-                        <div class="flex justify-center">
+                            class="hidden sm:flex sm:text-center sm:justify-center text-xl" />
+                        <div class="hidden sm:flex justify-center">
+                            <embed id="vistaPrevia" type="application/pdf" class="bg-gray-700 w-full h-60">
                             <embed id="vistaPrevia" type="application/pdf" class="bg-gray-700 w-full h-60">
                         </div>
                         <InputLabel v-if="formEdit.Archivo == ''" for="vistaPrevia"
@@ -373,28 +399,36 @@ onMounted(() => {
                         <thead>
                             <tr class="border-2 bg-gray-200 border-black">
                                 <th
-                                    class="py-2 px-4 font-bold uppercase text-sm text-center border-2 border-black hover:bg-gray-300">
+                                style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
                                     Expedida</th>
                                 <th
-                                    class="py-2 px-4 font-bold uppercase text-sm text-center border-2 border-black hover:bg-gray-300">
-                                    Titulo</th>
+                                style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
+                                    Título</th>
                                 <th
-                                    class="py-2 px-4 font-bold uppercase text-sm text-center border-2 border-black hover:bg-gray-300">
+                                style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
                                     Estatus</th>
                                 <th
-                                    class="py-2 px-4 font-bold uppercase text-sm text-center border-2 border-black hover:bg-gray-300">
-                                    Region</th>
+                                style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
+                                    Región</th>
                                 <th
-                                    class="py-2 px-4 font-bold uppercase text-sm text-center border-2 border-black hover:bg-gray-300">
+                                style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
                                     dpto./dpncia.</th>
                                 <th
-                                    class="py-2 px-4 font-bold uppercase text-sm text-center border-2 border-black hover:bg-gray-300">
-                                    TipoDoc</th>
+                                style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
+                                    Tipo</th>
                                 <th
-                                    class="py-2 px-4 font-bold uppercase text-sm text-center border-2 border-black hover:bg-gray-300">
-                                    Periodo</th>
+                                style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
+                                    Período</th>
                                 <th
-                                    class="py-2 px-4 font-bold uppercase text-sm text-center border-2 border-black hover:bg-gray-300">
+                                style="text-align: center;"
+                                    class="py-2 px-4 font-semibold text-base border-2 border-black hover:bg-gray-300">
                                     Acciones</th>
                             </tr>
                         </thead>

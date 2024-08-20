@@ -20,7 +20,7 @@ return new class extends Migration
         DB::table('departamento')->insert(
             [
                 'IdDepartamento'=>1000,
-                'nombreDepartamento'=>'otro',
+                'nombreDepartamento'=>'Desarrollo académico',
             ]
             );
     }

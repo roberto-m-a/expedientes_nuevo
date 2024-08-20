@@ -131,7 +131,7 @@ const filtrarConsulta = () => {
         <template #header>
             <div class="flex flex-row items-end space-x-4">
                 <h2 class="font-semibold text-2xl text-black leading-tight">Dashboard</h2>
-                <h2 class="text-gray-500 font-semibold">Información del sistema con graficas</h2>
+                <h2 class="text-gray-500 font-semibold">Información del sistema con gráficas</h2>
             </div>
         </template>
         <Modal :show=verificarContraseña>
@@ -162,7 +162,7 @@ const filtrarConsulta = () => {
                         Para continuar con tu registro, por favor ingresa una contraseña.
                     </p>
                     <p>
-                        Debe de contener minimo una minuscula, una mayuscula, un numero, un simbolo y tener entre 8 y 18
+                        Debe de contener mínimo una minúscula, una mayúscula, un número, un símbolo y tener entre 8 y 18
                         caracteres.
                     </p>
                     <InputLabel for="password" value="Contraseña" class="pt-2" />
@@ -188,11 +188,11 @@ const filtrarConsulta = () => {
 
                     <div class="flex flex-row content-end justify-end pt-2">
                         <div :hidden="!show_filtros" class="space-x-2">
-                            <SecondaryButton @click="limpiarFiltros">Limpiar filtros</SecondaryButton>
-                            <SecondaryButton @click="show_filtros = false">Ocultar filtros</SecondaryButton>
+                            <SecondaryButton @click="limpiarFiltros" class="bg-blue-300 hover:bg-blue-700 hover:text-white">Limpiar filtros</SecondaryButton>
+                            <SecondaryButton @click="show_filtros = false" class="bg-green-300 hover:bg-green-700 hover:text-white">Ocultar filtros</SecondaryButton>
                         </div>
                         <div :hidden="show_filtros">
-                            <SecondaryButton @click="show_filtros = true">Mostrar filtros</SecondaryButton>
+                            <SecondaryButton @click="show_filtros = true" class="bg-green-300 hover:bg-green-700 hover:text-white">Mostrar filtros</SecondaryButton>
                         </div>
                     </div>
 
@@ -217,9 +217,9 @@ const filtrarConsulta = () => {
                                         :filterable="true" v-model="form.TipoDocumento" class="border-white" />
                                 </div>
                                 <div class="flex flex-col w-full">
-                                    <InputLabel for="periodoEscolar" value="PeriodoEscolar" class="pt-2" />
+                                    <InputLabel for="periodoEscolar" value="Por período escolar" class="pt-2" />
                                     <v-select type="text" id="periodoEscolar" label="generalInfo"
-                                        placeholder="Periodo escolar" :options="periodos_escolares" :filterable="true"
+                                        placeholder="Introduce el período escolar" :options="periodos_escolares" :filterable="true"
                                         v-model="form.PeriodoEscolar" class="border-white" />
                                 </div>
                                 <div class="flex flex-col w-full">
@@ -229,38 +229,52 @@ const filtrarConsulta = () => {
                                         :filterable="true" v-model="form.Departamento" class="border-white" />
                                 </div>
                             </div>
-                            <InputLabel for="Region" value="Por región del documento" class="pt-2"
-                                v-show="form.Departamento == '' || form.Departamento == null" />
-                            <div class=" align-middle justify-evenly space-x-2"
-                                v-show="form.Departamento == '' || form.Departamento == null">
-                                <div class="flex flex-auto justify-evenly">
-                                    <input type="radio" id="Todos" value="Todos" v-model="form.Region" />
-                                    <label for="Todos">Todos</label>
+                            
+                            <div class="md:flex md:flex-row justify-evenly p-3 space-x-5">
+                                <div class=" align-middle justify-evenly space-x-2  w-full"
+                                    v-show="form.Departamento == '' || form.Departamento == null">
+                                    <InputLabel for="Region" value="Por región del documento" class="pt-2"
+                                        v-show="form.Departamento == '' || form.Departamento == null" />
 
-                                    <input type="radio" id="interno" value="Interno" v-model="form.Region" />
-                                    <label for="Interno">Interno</label>
-
-                                    <input type="radio" id="externo" value="Externo" v-model="form.Region" />
-                                    <label for="Externo">Externo</label>
+                                    <div class="flex flex-auto justify-evenly">
+                                        <div class="space-x-2">
+                                            <label for="Todos">Todos</label>
+                                            <input type="radio" id="Todos" value="Todos" v-model="form.Region" />
+                                        </div>
+                                        <div class="space-x-2">
+                                            <label for="Interno">Interno</label>
+                                            <input type="radio" id="interno" value="Interno" v-model="form.Region" />
+                                        </div>
+                                        <div class="space-x-2">
+                                            <label for="Externo">Externo</label>
+                                            <input type="radio" id="externo" value="Externo" v-model="form.Region" />
+                                        </div>
+                                    </div>
+                                    <div class="text-end block font-medium text-sm text-gray-700">Seleccionó: {{
+                                        form.Region
+                                        }}</div>
                                 </div>
-                                <div class="text-end block font-medium text-sm text-gray-700">Seleccionó: {{
-                                    form.Region
-                                    }}</div>
-                            </div>
-                            <div class=" align-middle justify-evenly space-x-2">
-                                <InputLabel for="Estatus" value="Por su estatus" class="" />
-                                <div class="flex flex-auto justify-evenly">
-                                    <input type="radio" id="Todos" value="Todos" v-model="form.Estatus" />
-                                    <label for="Todos">Todos</label>
-
-                                    <input type="radio" id="proceso" value="En proceso" v-model="form.Estatus" />
-                                    <label for="En proceso">En proceso</label>
-
-                                    <input type="radio" id="entregado" value="Entregado" v-model="form.Estatus" />
-                                    <label for="Externo">Entregado</label>
+                                <div class=" align-middle justify-evenly space-x-2 w-full">
+                                    <InputLabel for="Estatus" value="Por su estatus" />
+                                    <div class="flex flex-auto justify-evenly">
+                                        <div class="space-x-2">
+                                            <label for="Todos">Todos</label>
+                                            <input type="radio" id="Todos" value="Todos" v-model="form.Estatus" />
+                                        </div>
+                                        <div class="space-x-2">
+                                            <label for="En proceso">En proceso</label>
+                                            <input type="radio" id="proceso" value="En proceso"
+                                                v-model="form.Estatus" />
+                                        </div>
+                                        <div class="space-x-2">
+                                            <label for="Externo">Entregado</label>
+                                            <input type="radio" id="entregado" value="Entregado"
+                                                v-model="form.Estatus" />
+                                        </div>
+                                    </div>
+                                    <div class="text-end block font-medium text-sm text-gray-700">Seleccionó: {{
+                                        form.Estatus }}</div>
                                 </div>
-                                <div class="text-end block font-medium text-sm text-gray-700">Seleccionó: {{
-                                    form.Estatus }}</div>
                             </div>
                             <div class="flex justify-end">
                                 <PrimaryButton>Consultar con filtros</PrimaryButton>

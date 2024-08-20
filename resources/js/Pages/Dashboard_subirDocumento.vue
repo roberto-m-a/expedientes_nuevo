@@ -124,7 +124,7 @@ const controlRegion = async (e) =>{
         <template #header>
             <div class="flex flex-row items-end space-x-4">
                 <h2 class="font-semibold text-2xl text-black leading-tight">Subir documento</h2>
-                <h2 class="text-gray-500 font-semibold">Recaba informacion para un documento nuevo en tu expediente</h2>
+                <h2 class="text-gray-500 font-semibold">Recaba información para un documento nuevo en tu expediente</h2>
             </div>
         </template>
         <div class="py-12">
@@ -136,13 +136,13 @@ const controlRegion = async (e) =>{
                         <form action="" @submit.prevent="nuevoDocumento" class="space-y-2">
                             <div class="sm:flex sm:flex-row">
                                 <div class="sm:flex-grow">
-                                    <InputLabel for="tipoDocumento" value="¿Qué tipo de documento es?" class="pt-2" />
+                                    <InputLabel for="tipoDocumento" value="Selecciona el tipo de documento" class="pt-2" />
                                     <v-select type="text" id="tipoDocumento" label="nombreTipoDoc"
                                         placeholder="Introduce el tipo de documento" :options="tiposDocumentos"
                                         :filterable="true" v-model="formDocumento.TipoDocumento" class="border-white" />
                                     <InputError class="mt-2" :message="formDocumento.errors.TipoDocumento" />
 
-                                    <InputLabel for="Titulo" value="Titulo" class="pt-2" />
+                                    <InputLabel for="Titulo" value="Título del documento" class="pt-2" />
                                     <TextInput id="Titulo" type="text" class="mt-1 block w-full" required
                                         v-model="formDocumento.Titulo" />
                                     <InputError class="mt-2" :message="formDocumento.errors.Titulo" />
@@ -150,17 +150,20 @@ const controlRegion = async (e) =>{
                                     <TextInput id="FechaExpedición" type="date" :max="fechaActual"
                                         class="mt-1 block w-full" required v-model="formDocumento.FechaExpedicion" />
                                     <InputError class="mt-2" :message="formDocumento.errors.FechaExpedicion" />
-                                    <InputLabel for="Region" value="Region del documento" class="pt-2" />
+                                    <InputLabel for="Region" value="Región del documento" class="pt-2" />
                                     <div class=" align-middle justify-evenly space-x-2">
 
                                         <div class="flex flex-auto justify-evenly">
-                                            <input @change="controlRegion" type="radio" id="interno" value="Interno"
+                                            <div class="space-x-2">
+                                                <label for="Interno">Interno</label>
+                                                <input @change="controlRegion" type="radio" id="interno" value="Interno"
                                                 v-model="formDocumento.Region" />
-                                            <label for="Interno">Interno</label>
-
-                                            <input @change="controlRegion" type="radio" id="externo" value="Externo"
+                                            </div>
+                                            <div class="space-x-2">
+                                                <label for="Externo">Externo</label>
+                                                <input @change="controlRegion" type="radio" id="externo" value="Externo"
                                                 v-model="formDocumento.Region" />
-                                            <label for="Externo">Externo</label>
+                                            </div>
                                         </div>
                                         <div class="text-end block font-medium text-sm text-gray-700">Seleccionó: {{
         formDocumento.Region }}</div>
@@ -168,7 +171,7 @@ const controlRegion = async (e) =>{
                                     <InputError class="mt-2" :message="formDocumento.errors.Region" />
 
                                     <div v-if="formDocumento.Region == 'Interno'">
-                                        <InputLabel for="Departamento" value="Departamento" class="pt-2" />
+                                        <InputLabel for="Departamento" value="Departamento del documento" class="pt-2" />
                                         <v-select type="text" id="Departamento" label="nombreDepartamento"
                                             placeholder="Introduce el departamento del que proviene"
                                             :options="departamentos" :filterable="true"
@@ -176,22 +179,29 @@ const controlRegion = async (e) =>{
                                         <InputError class="mt-2" :message="formDocumento.errors.Departamento" />
                                     </div>
                                     <div v-if="formDocumento.Region == 'Externo'">
-                                        <InputLabel for="Dependencia" value="Dependencia" class="pt-2" />
+                                        <InputLabel for="Dependencia" value="Dependencia del documento" class="pt-2" />
                                         <TextInput id="Dependencia" type="text" class="mt-1 block w-full" required
                                             v-model="formDocumento.Dependencia" />
                                         <InputError class="mt-2" :message="formDocumento.errors.Dependencia" />
                                     </div>
                                     <div v-if="formDocumento.Region == 'Interno'"
                                         class=" align-middle justify-evenly space-x-2">
-                                        <InputLabel for="Estatus" value="Estatus" class="" />
+                                        <InputLabel for="Estatus" value="Seleccione el estatus del documento" class="" />
                                         <div class="flex flex-auto justify-evenly">
-                                            <input type="radio" id="proceso" value="En proceso"
+                                            <div class="space-x-2">
+                                                <label for="Interno">En proceso</label>
+                                                <input type="radio" id="proceso" value="En proceso"
                                                 v-model="formDocumento.Estatus" />
-                                            <label for="Interno">En proceso</label>
+                                            </div>
+                                            <div class="space-x-2">
+                                                <label for="Externo">Entregado</label>
+                                                <input type="radio" id="entregado" value="Entregado"
+                                                v-model="formDocumento.Estatus" />
+                                            </div>
+                                            
 
-                                            <input type="radio" id="entregado" value="Entregado"
-                                                v-model="formDocumento.Estatus" />
-                                            <label for="Externo">Entregado</label>
+                                            
+                                            
                                         </div>
                                         <div class="text-end block font-medium text-sm text-gray-700">Seleccionó: {{
         formDocumento.Estatus }}</div>
@@ -203,14 +213,14 @@ const controlRegion = async (e) =>{
                                     <InputError class="mt-2" :message="formDocumento.errors.FechaEntrega" />
                                     </div>
 
-                                    <InputLabel for="periodoEscolar" value="PeriodoEscolar" class="pt-2" />
+                                    <InputLabel for="periodoEscolar" value="Seleccione el período escolar" class="pt-2" />
                                     <v-select type="text" id="periodoEscolar" label="generalInfo"
                                         placeholder="Periodo escolar al que pertenece" :options="periodosEscolares"
                                         :filterable="true" v-model="formDocumento.PeriodoEscolar"
                                         class="border-white" />
                                     <InputError class="mt-2" :message="formDocumento.errors.PeriodoEscolar" />
 
-                                    <InputLabel for="archivo" value="Archivo (peso maximo: 5MB)" class="pt-2" />
+                                    <InputLabel for="archivo" value="Archivo (peso máximo: 5MB)" class="pt-2" />
                                     <div class="space-y-2">
                                         <TextInput id="Archivo" type="file" class="mt-1 block w-full"
                                             accept="application/pdf" required @change="documentoT" />

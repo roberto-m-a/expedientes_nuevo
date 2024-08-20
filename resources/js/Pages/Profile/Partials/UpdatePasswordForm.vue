@@ -40,12 +40,12 @@ const updatePassword = () => {
 
             <p class="mt-1 text-sm text-gray-600">
                 Actualiza tu contraseña para mantener tu cuenta segura.
-                Recuerda que tu contraseña debde contener:
+                Recuerda que tu contraseña debe de contener:
                 <p>
                     *Entre 8 y 18 caracteres.
                 </p>
-                <p>*Minimo una minúscula y una mayúscula</p>
-                <p>*Un simbolo (!#$%&/=?¡¿*+-~`[])</p>
+                <p>*Mínimo una minúscula y una mayúscula</p>
+                <p>*Un símbolo (!#$%&/=?¡¿*+-~`[])</p>
             </p>
         </header>
 

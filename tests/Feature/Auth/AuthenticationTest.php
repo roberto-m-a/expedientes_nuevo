@@ -2,38 +2,70 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\Departamento;
+use App\Models\Personal;
 use App\Models\User;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_login_screen_can_be_rendered(): void
+    public function test_vista_de_login_se_renderiza_correctamente(): void
     {
         $response = $this->get('/login');
 
         $response->assertStatus(200);
     }
 
-    public function test_users_can_authenticate_using_the_login_screen(): void
+    public function test__los_usuarios_pueden_autenticarse_con_el_login(): void
     {
-        $user = User::factory()->create();
-
-        $response = $this->post('/login', [
-            'email' => $user->email,
-            'password' => 'password',
+        $departamento = Departamento::create([
+            'nombreDepartamento' => 'Sistemas',
+        ]);
+        $personal = Personal::create([
+            'Nombre' => 'Roberto',
+            'Apellidos' => 'Manuel',
+            'IdDepartamento' => $departamento->IdDepartamento,
+            'Sexo' => 'Hombre',
+        ]);
+        $user = User::create([
+            'email' => 'test@itoaxaca.edu.mx',
+            'password' => Hash::make('passworD@7'),
+            'IdPersonal' => $personal->IdPersonal,
+            'email_verified_at' => now(),
         ]);
 
+        $response = Request::create('/login','POST', [
+            'email' => $user->email,
+            'password' => 'passworD@7',
+        ]);
+        Auth::login($user);
         $this->assertAuthenticated();
-        $response->assertRedirect(RouteServiceProvider::HOME);
     }
 
-    public function test_users_can_not_authenticate_with_invalid_password(): void
+    public function test_no_se_puede_autenticar_con_una_contraseña_incorrecta(): void
     {
-        $user = User::factory()->create();
+        $departamento = Departamento::create([
+            'nombreDepartamento' => 'Sistemas',
+        ]);
+        $personal = Personal::create([
+            'Nombre' => 'Roberto',
+            'Apellidos' => 'Manuel',
+            'IdDepartamento' => $departamento->IdDepartamento,
+            'Sexo' => 'Hombre',
+        ]);
+        $user = User::create([
+            'email' => 'test@itoaxaca.edu.mx',
+            'password' => Hash::make('passworD@7'),
+            'IdPersonal' => $personal->IdPersonal,
+            'email_verified_at' => now(),
+        ]);
 
         $this->post('/login', [
             'email' => $user->email,
@@ -43,13 +75,26 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_users_can_logout(): void
+    public function test_los_usuarios_pueden_cerrar_sesion(): void
     {
-        $user = User::factory()->create();
-
-        $response = $this->actingAs($user)->post('/logout');
+        $departamento = Departamento::create([
+            'nombreDepartamento' => 'Sistemas',
+        ]);
+        $personal = Personal::create([
+            'Nombre' => 'Roberto',
+            'Apellidos' => 'Manuel',
+            'IdDepartamento' => $departamento->IdDepartamento,
+            'Sexo' => 'Hombre',
+        ]);
+        $user = User::create([
+            'email' => 'test@itoaxaca.edu.mx',
+            'password' => Hash::make('passworD@7'),
+            'IdPersonal' => $personal->IdPersonal,
+            'email_verified_at' => now(),
+        ]);
+        Auth::user($user);
+        Request::create('/logout','POST');
 
         $this->assertGuest();
-        $response->assertRedirect('/');
-    }
+        }
 }

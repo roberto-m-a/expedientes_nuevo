@@ -51,6 +51,7 @@ $.fn.dataTable.ext.search.push(function (settings, searchData) {
 
 $(document).ready(function () {
     var table = $('#tablaExpedientes').DataTable({
+        order: [[2, "desc"]],
         paging: true,
         searching: true,
         responsive: true,
@@ -58,25 +59,25 @@ $(document).ready(function () {
         language: {
             "decimal": "",
             "emptyTable": "No hay información",
-            "info": "Mostrando _START_ a _END_ de _TOTAL_ Entradas",
-            "infoEmpty": "Mostrando 0 to 0 of 0 Entradas",
-            "infoFiltered": "(Filtrado de _MAX_ total entradas)",
+            "info": "Mostrando del expediente _START_ al expediente _END_ de un total de _TOTAL_ expedientes",
+            "infoEmpty": "No hay expedientes",
+            "infoFiltered": "(Filtrado de un total de _MAX_ expedientes)",
             "infoPostFix": "",
             "thousands": ",",
             "lengthMenu": "Mostrar _MENU_ Entradas",
             "loadingRecords": "Cargando...",
             "processing": "Procesando...",
             "search": "Buscar:",
-            "zeroRecords": "Sin resultados encontrados",
+            "zeroRecords": "Sin expedientes",
             "paginate": {
                 "first": "Primero",
-                "last": "Ultimo",
+                "last": "Último",
                 "next": "Siguiente",
                 "previous": "Anterior"
             },},
             data: props.expedientes,
             columns: [
-                { title: "# de docs", data: 'numDocumentos' },
+                { title: "Cantidad de documentos", data: 'numDocumentos' },
                 { title: "Nombre", data: 'Nombre' },
                 { title: "Apellidos", data: 'Apellidos' },
                 { title: "Departamento", data: 'nombreDepartamento' },

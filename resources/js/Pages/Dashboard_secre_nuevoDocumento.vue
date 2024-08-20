@@ -41,7 +41,7 @@ const fechaActual = fecha.getFullYear() + '-' + ((fecha.getMonth() + 1) < 10 ? '
 const form = useForm({
     Titulo: '',
     FechaExpedicion: '',
-    FechaEntrega:'',
+    FechaEntrega: '',
     Departamento: '',
     TipoDocumento: '',
     PeriodoEscolar: '',
@@ -54,7 +54,7 @@ const form = useForm({
 
 const nuevoDocumento = () => {
     form.post(route('registrar.documento'), {
-        
+
         onSuccess: () => {
             //abrir.value = false;
             form.reset()
@@ -73,7 +73,7 @@ const documentoT = async (e) => {
     if (!(e.target instanceof HTMLInputElement)) {
         return Promise.reject(new Error("no es HTMLInputElement"));
     }
-    if(e.target.files[0] == null){
+    if (e.target.files[0] == null) {
         document.getElementById('Archivo').value = null;
         document.querySelector('#vistaPrevia').setAttribute('src', '');
         form.Archivo = '';
@@ -105,15 +105,15 @@ const limpiar = () => {
     document.querySelector('#vistaPrevia').setAttribute('src', '');
     pesoMax.value = false;
 }
-const controlRegion = async (e) =>{
+const controlRegion = async (e) => {
     console.log('entra al chcked')
     if (!(e.target instanceof HTMLInputElement)) {
         return Promise.reject(new Error("no es HTMLInputElement"));
     }
-    if(document.getElementById('interno').checked){
+    if (document.getElementById('interno').checked) {
         form.Estatus = 'En proceso';
     }
-    if(document.getElementById('externo').checked){
+    if (document.getElementById('externo').checked) {
         form.Estatus = 'Entregado';
     }
 }
@@ -150,13 +150,14 @@ const controlRegion = async (e) =>{
                                         :options="expediente_data" :filterable="true" v-model="form.Expediente"
                                         class="border-white" />
                                     <InputError class="mt-2" :message="form.errors.Expediente" />
-                                    <InputLabel for="tipoDocumento" value="¿Qué tipo de documento es?" class="pt-2" />
+                                    <InputLabel for="tipoDocumento" value="Seleccione el tipo de documento"
+                                        class="pt-2" />
                                     <v-select type="text" id="tipoDocumento" label="nombreTipoDoc"
                                         placeholder="Introduce el tipo de documento" :options="tiposDocumentos"
                                         :filterable="true" v-model="form.TipoDocumento" class="border-white" />
                                     <InputError class="mt-2" :message="form.errors.TipoDocumento" />
 
-                                    <InputLabel for="Titulo" value="Titulo" class="pt-2" />
+                                    <InputLabel for="Titulo" value="Título del documento" class="pt-2" />
                                     <TextInput id="Titulo" type="text" class="mt-1 block w-full" required
                                         v-model="form.Titulo" />
                                     <InputError class="mt-2" :message="form.errors.Titulo" />
@@ -164,23 +165,29 @@ const controlRegion = async (e) =>{
                                     <TextInput id="FechaExpedición" type="date" :max="fechaActual"
                                         class="mt-1 block w-full" required v-model="form.FechaExpedicion" />
                                     <InputError class="mt-2" :message="form.errors.FechaExpedicion" />
-                                    <InputLabel for="Region" value="Region del documento" class="pt-2" />
+                                    <InputLabel for="Region" value="Región del documento" class="pt-2" />
                                     <div class=" align-middle justify-evenly space-x-2">
                                         <div class="flex flex-auto justify-evenly">
-                                            <input @change="controlRegion" type="radio" id="interno" value="Interno" v-model="form.Region" />
-                                            <label for="Interno">Interno</label>
-
-                                            <input @change="controlRegion" type="radio" id="externo" value="Externo" v-model="form.Region" />
-                                            <label for="Externo">Externo</label>
+                                            <div class="space-x-2">
+                                                <label for="Interno">Interno</label>
+                                                <input @change="controlRegion" type="radio" id="interno" value="Interno"
+                                                    v-model="form.Region" />
+                                            </div>
+                                            <div class="space-x-2">
+                                                <label for="Externo">Externo</label>
+                                                <input @change="controlRegion" type="radio" id="externo" value="Externo"
+                                                    v-model="form.Region" />
+                                            </div>
                                         </div>
                                         <div class="text-end block font-medium text-sm text-gray-700">Seleccionó: {{
                                             form.Region
-                                        }}</div>
+                                            }}</div>
                                     </div>
                                     <InputError class="mt-2" :message="form.errors.Region" />
 
                                     <div v-if="form.Region == 'Interno'">
-                                        <InputLabel for="Departamento" value="Departamento" class="pt-2" />
+                                        <InputLabel for="Departamento" value="Departamento del documento"
+                                            class="pt-2" />
                                         <v-select type="text" id="Departamento" label="nombreDepartamento"
                                             placeholder="Introduce el departamento del que proviene"
                                             :options="departamentos" :filterable="true" v-model="form.Departamento"
@@ -188,43 +195,50 @@ const controlRegion = async (e) =>{
                                         <InputError class="mt-2" :message="form.errors.Departamento" />
                                     </div>
                                     <div v-if="form.Region == 'Externo'">
-                                        <InputLabel for="Dependencia" value="Dependencia" class="pt-2" />
+                                        <InputLabel for="Dependencia" value="Dependencia del documento" class="pt-2" />
                                         <TextInput id="Dependencia" type="text" class="mt-1 block w-full" required
                                             v-model="form.Dependencia" />
                                         <InputError class="mt-2" :message="form.errors.Dependencia" />
                                     </div>
 
                                     <div v-if="form.Region == 'Interno'" class=" align-middle justify-evenly space-x-2">
-                                        <InputLabel for="Estatus" value="Estatus" class="" />
+                                        <InputLabel for="Estatus" value="Seleccione el estatus del documento"
+                                            class="" />
                                         <div class="flex flex-auto justify-evenly">
-                                            <input type="radio" id="proceso" value="En proceso"
-                                                v-model="form.Estatus" />
-                                            <label for="Interno">En proceso</label>
+                                            <div class="space-x-2">
+                                                <label for="Interno">En proceso</label>
+                                                <input type="radio" id="proceso" value="En proceso"
+                                                    v-model="form.Estatus" />
+                                            </div>
+                                            <div class="space-x-2">
+                                                <label for="Externo">Entregado</label>
+                                                <input type="radio" id="entregado" value="Entregado"
+                                                    v-model="form.Estatus" />
+                                            </div>
 
-                                            <input type="radio" id="entregado" value="Entregado"
-                                                v-model="form.Estatus" />
-                                            <label for="Externo">Entregado</label>
                                         </div>
                                         <div class="text-end block font-medium text-sm text-gray-700">Seleccionó: {{
-                                                                    form.Estatus }}</div>
+                                            form.Estatus }}</div>
                                     </div>
-                                    <div v-if="form.Estatus=='Entregado'">
+                                    <div v-if="form.Estatus == 'Entregado'">
                                         <InputLabel for="FechaEntrega" value="Fecha de entrega" class="pt-2" />
-                                    <TextInput id="FechaEntrega" type="date" :min="form.FechaExpedicion" :max="fechaActual"
-                                        class="mt-1 block w-full" required v-model="form.FechaEntrega" />
-                                    <InputError class="mt-2" :message="form.errors.FechaEntrega" />
+                                        <TextInput id="FechaEntrega" type="date" :min="form.FechaExpedicion"
+                                            :max="fechaActual" class="mt-1 block w-full" required
+                                            v-model="form.FechaEntrega" />
+                                        <InputError class="mt-2" :message="form.errors.FechaEntrega" />
                                     </div>
 
-                                    <InputLabel for="periodoEscolar" value="PeriodoEscolar" class="pt-2" />
+                                    <InputLabel for="periodoEscolar" value="Seleccione el período escolar"
+                                        class="pt-2" />
                                     <v-select type="text" id="periodoEscolar" label="generalInfo"
                                         placeholder="Periodo escolar al que pertenece" :options="periodosEscolares"
                                         :filterable="true" v-model="form.PeriodoEscolar" class="border-white" />
                                     <InputError class="mt-2" :message="form.errors.PeriodoEscolar" />
 
-                                    <InputLabel for="archivo" value="Archivo (peso maximo: 5MB)" class="pt-2" />
+                                    <InputLabel for="archivo" value="Archivo (peso máximo: 5MB)" class="pt-2" />
                                     <div class="space-y-2">
                                         <TextInput id="Archivo" type="file" class="mt-1 block w-full"
-                                            accept="application/pdf" required @change="documentoT"/>
+                                            accept="application/pdf" required @change="documentoT" />
                                         <div v-if="form.Archivo != ''"
                                             class="flex flex-auto align-middle justify-center space-x-4 pr-5">
                                             <DangerButton @click="limpiar">Quitar archivo</DangerButton>
@@ -238,15 +252,15 @@ const controlRegion = async (e) =>{
                                         </p>
                                     </div>
                                 </div>
-
+                                <p class="sm:hidden justify-center text-center font-semibold">Las vistas previas no son soportadas en dispositivos móviles</p>
                                 <div class="justify-items-center content-center p-2 text-gray-900 space-y-4">
-                                    <InputLabel for="vistaPrevia" value="Vista previa del documento"
-                                        class="text-center text-xl" />
-                                    <div class="flex justify-center">
+                                    <InputLabel for="vistaPrevia" value="Vista previa del nuevo documento"
+                                        class="hidden sm:flex sm:text-center sm:justify-center text-xl" />
+                                    <div class="hidden sm:flex justify-center">
                                         <embed id="vistaPrevia" type="application/pdf" width="470" height="600"
                                             class="bg-gray-700">
                                     </div>
-                                    <InputLabel v-if="form.Archivo ==''" for="vistaPrevia"
+                                    <InputLabel v-if="form.Archivo == ''" for="vistaPrevia"
                                         value="Aún no se ha subido nada" class="text-center text-l text-red-600" />
                                 </div>
 
@@ -254,16 +268,16 @@ const controlRegion = async (e) =>{
 
                             <div class="flex flex-col justify-center pt-2 text-center">
                                 <div>
-                                        <p class="text-sm p-2">
-                                            *Antes de guardar el archivo asegurese de corroborar su información. Ya que
-                                            en caso
-                                            de que
-                                            algun dato este mal tendrá que ir al apartado de expedientes y buscar el
-                                            documento
-                                            entre
-                                            todos los expedientes y editarlo desde ahi.
-                                        </p>
-                                    </div>
+                                    <p class="text-sm p-2">
+                                        *Antes de guardar el archivo asegurese de corroborar su información. Ya que
+                                        en caso
+                                        de que
+                                        algun dato este mal tendrá que ir al apartado de expedientes y buscar el
+                                        documento
+                                        entre
+                                        todos los expedientes y editarlo desde ahi.
+                                    </p>
+                                </div>
                                 <PrimaryButton class="flex justify-center">Guardar archivo</PrimaryButton>
                             </div>
                         </form>
