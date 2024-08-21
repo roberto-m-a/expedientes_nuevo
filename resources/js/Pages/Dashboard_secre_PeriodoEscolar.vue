@@ -284,7 +284,10 @@ onMounted(() => {
                         <TextInput id="nombre_corto" type="text" class="mt-1 block w-full"
                             v-model="formEdit.nombre_corto" autofocus required />
                         <InputError class="mt-2" :message="formEdit.errors.nombre_corto" />
-                        <div class="flex flex-items justify-end pt-4">
+                        <div class="flex flex-items justify-between items-center pt-4">
+                            <p class="text-red-500 font-semibold">
+                                *Corrobore su información antes de guardarla
+                            </p>
                             <PrimaryButton>Guardar</PrimaryButton>
                         </div>
                     </form>
@@ -317,7 +320,10 @@ onMounted(() => {
                         <TextInput id="nombre_corto" type="text" class="mt-1 block w-full" v-model="form.nombre_corto"
                             autofocus required />
                         <InputError class="mt-2" :message="form.errors.nombre_corto" />
-                        <div class="flex flex-items justify-end pt-4">
+                        <div class="flex flex-items justify-between items-center pt-4">
+                            <p class="text-red-500 font-semibold">
+                                *Corrobore su información antes de guardarla
+                            </p>
                             <PrimaryButton>Guardar</PrimaryButton>
                         </div>
                     </form>

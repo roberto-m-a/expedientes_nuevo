@@ -262,7 +262,10 @@ onMounted(() => {
                         <TextInput id="nombreDepartamento" type="text" class="mt-1 block w-full"
                             v-model="formEdit.nombreDepartamento" autofocus required />
                         <InputError class="mt-2" :message="formEdit.errors.nombreDepartamento" />
-                        <div class="flex flex-items justify-end pt-4">
+                        <div class="flex flex-items justify-between items-center pt-4">
+                            <p class="text-red-500 font-semibold">
+                                *Corrobore su información antes de guardarla
+                            </p>
                             <PrimaryButton>Guardar</PrimaryButton>
                         </div>
                     </form>
@@ -285,7 +288,10 @@ onMounted(() => {
                         <TextInput id="nombreDepartamento" type="text" class="mt-1 block w-full"
                             v-model="form.nombreDepartamento" autofocus required />
                         <InputError class="mt-2" :message="form.errors.nombreDepartamento" />
-                        <div class="flex flex-items justify-end pt-4">
+                        <div class="flex flex-items justify-between items-center pt-4">
+                            <p class="text-red-500 font-semibold">
+                                *Corrobore su información antes de guardarla
+                            </p>
                             <PrimaryButton>Guardar</PrimaryButton>
                         </div>
                     </form>

@@ -252,9 +252,9 @@ const controlRegion = async (e) =>{
                                 <p class="text-sm p-2">
                                     *Antes de guardar el archivo asegurese de corroborar su información. Ya que en caso
                                     de que
-                                    algun dato este mal tendrá que ir al apartado de expedientes y buscar el documento
+                                    algún dato este mal tendrá que ir al apartado de expedientes y buscar el documento
                                     entre
-                                    todos los expedientes y editarlo desde ahi.
+                                    todos los expedientes y editarlo desde ahí.
                                 </p>
                             </div>
                                 <PrimaryButton class="flex justify-center">Guardar archivo</PrimaryButton>

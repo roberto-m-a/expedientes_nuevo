@@ -94,13 +94,16 @@ const dataset = [
                             :filterable="true" v-model="formDataUser.Departamento" class="border-white" />
                         <InputError class="mt-2" :message="formDataUser.errors.Departamento" />
                     </div>
-                    <InputLabel for="Estatus" value="Sexo" class="" />
+                    <InputLabel for="Estatus" value="Sexo" />
                     <div class="flex flex-auto justify-evenly">
-                        <input type="radio" id="Hombre" value="Hombre" v-model="formDataUser.Sexo" />
-                        <label for="Hombre">Hombre</label>
-
+                        <div class="space-x-2">
+                            <label for="Hombre">Hombre</label>
+                            <input type="radio" id="Hombre" value="Hombre" v-model="formDataUser.Sexo" />
+                        </div>
+                        <div class="space-x-2">
+                            <label for="Mujer">Mujer</label>
                         <input type="radio" id="entregado" value="Mujer" v-model="formDataUser.Sexo" />
-                        <label for="Mujer">Mujer</label>
+                        </div>
                     </div>
                     <div class="text-end block font-medium text-sm text-gray-700">Seleccionó: {{
                         formDataUser.Sexo }}</div>

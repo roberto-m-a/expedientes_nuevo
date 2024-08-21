@@ -257,7 +257,10 @@ onMounted(() => {
                         <TextInput id="tipoDoc" type="text" class="mt-1 block w-full" v-model="formEdit.nombreTipoDoc"
                             autofocus required />
                         <InputError class="mt-2" :message="formEdit.errors.nombreTipoDoc" />
-                        <div class="flex flex-items justify-end pt-4">
+                        <div class="flex flex-items justify-between items-center pt-4">
+                            <p class="text-red-500 font-semibold">
+                                *Corrobore su información antes de guardarla
+                            </p>
                             <PrimaryButton>Guardar</PrimaryButton>
                         </div>
                     </form>
@@ -279,7 +282,10 @@ onMounted(() => {
                         <TextInput id="tipoDoc" type="text" class="mt-1 block w-full"
                             v-model="form.nombreTipoDoc" autofocus required />
                         <InputError class="mt-2" :message="form.errors.nombreTipoDoc" />
-                        <div class="flex flex-items justify-end pt-4">
+                        <div class="flex flex-items justify-between items-center pt-4">
+                            <p class="text-red-500 font-semibold">
+                                *Corrobore su información antes de guardarla
+                            </p>
                             <PrimaryButton>Guardar</PrimaryButton>
                         </div>
                     </form>

@@ -150,13 +150,16 @@ const filtrarConsulta = () => {
                             :filterable="true" v-model="formUserData.Departamento" class="border-white" />
                         <InputError class="mt-2" :message="formUserData.errors.Departamento" />
                     </div>
-                    <InputLabel for="Estatus" value="Sexo" class="" />
+                    <InputLabel for="Estatus" value="Sexo"/>
                     <div class="flex flex-auto justify-evenly">
-                        <input type="radio" id="Hombre" value="Hombre" v-model="formUserData.Sexo" />
-                        <label for="Hombre">Hombre</label>
-
-                        <input type="radio" id="entregado" value="Mujer" v-model="formUserData.Sexo" />
-                        <label for="Mujer">Mujer</label>
+                        <div class="space-x-2">
+                            <label for="Hombre">Hombre</label>
+                            <input type="radio" id="Hombre" value="Hombre" v-model="formUserData.Sexo" />
+                        </div>
+                        <div class="space-x-2">
+                            <label for="Mujer">Mujer</label>
+                            <input type="radio" id="entregado" value="Mujer" v-model="formUserData.Sexo" />
+                        </div>
                     </div>
                     <div class="text-end block font-medium text-sm text-gray-700">Seleccionó: {{
                         formUserData.Sexo }}</div>

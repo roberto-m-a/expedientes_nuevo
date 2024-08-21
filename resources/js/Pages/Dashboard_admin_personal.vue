@@ -469,7 +469,10 @@ onMounted(() => {
                         </div>
                     </div>
                     <InputError class="mt-2" :message="form.errors.gradoAcademico" />
-                    <div class="flex flex-items justify-end pt-4">
+                    <div class="flex flex-items justify-between items-center pt-4">
+                        <p class="text-red-500 font-semibold">
+                            *Corrobore todos los datos antes de guardarlos
+                        </p>
                         <PrimaryButton>Guardar</PrimaryButton>
                     </div>
 
@@ -583,7 +586,10 @@ onMounted(() => {
                             </div>
                         </div>
                         <InputError class="mt-2" :message="form.errors.gradoAcademico" />
-                        <div class="flex flex-items justify-end pt-4">
+                        <div class="flex flex-items justify-between items-center pt-4">
+                            <p class="text-red-500 font-semibold">
+                                *Corrobore todos los datos antes de guardarlos
+                            </p>
                             <PrimaryButton>Guardar</PrimaryButton>
                         </div>
 
