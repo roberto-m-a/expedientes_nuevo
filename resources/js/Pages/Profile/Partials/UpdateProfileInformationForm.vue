@@ -41,7 +41,7 @@ const form = useForm({
             <h2 class="text-lg font-medium text-gray-900">Información de perfil</h2>
 
             <p class="mt-1 text-sm text-gray-600">
-                Actualiza tu Información de perfil y tu correo electrónico.
+                Actualiza tu información de perfil y tu correo electrónico.
             </p>
         </header>
 

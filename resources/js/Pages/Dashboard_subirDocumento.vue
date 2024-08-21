@@ -198,10 +198,6 @@ const controlRegion = async (e) =>{
                                                 <input type="radio" id="entregado" value="Entregado"
                                                 v-model="formDocumento.Estatus" />
                                             </div>
-                                            
-
-                                            
-                                            
                                         </div>
                                         <div class="text-end block font-medium text-sm text-gray-700">Seleccionó: {{
         formDocumento.Estatus }}</div>
@@ -237,10 +233,11 @@ const controlRegion = async (e) =>{
                                         </p>
                                     </div>
                                 </div>
+                                <p class="sm:hidden justify-center text-center font-semibold">Las vistas previas no son soportadas en dispositivos móviles</p>
                                 <div class="justify-items-center content-center p-2 text-gray-900 space-y-4">
-                                    <InputLabel for="vistaPrevia" value="Vista previa del documento"
-                                        class="text-center text-xl" />
-                                        <div class="flex justify-center">
+                                    <InputLabel for="vistaPrevia" value="Vista previa del nuevo documento"
+                                        class="hidden sm:flex sm:text-center sm:justify-center text-xl" />
+                                    <div class="hidden sm:flex justify-center">
                                             <embed id="vistaPrevia" type="application/pdf" width="500" height="600"
                                         class="bg-gray-700">
                                         </div>
