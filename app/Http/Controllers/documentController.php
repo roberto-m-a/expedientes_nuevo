@@ -169,7 +169,7 @@ class documentController extends Controller
             $expediente->numDocumentos = $expediente->numDocumentos + 1;
             $expediente->save();
         }
-        return Redirect::route('nuevoDocumento')->with('exitoDocumento', 'Se ha registrado el documento con éxito.');
+        return Redirect::route('nuevoDocumento')->with('creacionCorrecta', 'Se ha registrado el documento con éxito.');
     }
 
     public function editarDocumento(Request $request)

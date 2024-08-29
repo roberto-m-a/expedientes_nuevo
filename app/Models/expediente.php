@@ -18,7 +18,7 @@ class expediente extends Model
         'IdDocente',
     ];
     /**
-     * Get the docente associated with the expediente
+     * Obten el docente asociado a un expediente
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */

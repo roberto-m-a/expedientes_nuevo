@@ -20,7 +20,6 @@ class User extends Authenticatable implements MustVerifyEmail
      * @var array<int, string>
      */
     protected $fillable = [
-        
         'email',
         'password',
         'IdPersonal',
@@ -46,12 +45,24 @@ class User extends Authenticatable implements MustVerifyEmail
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+    /**
+     * Variable que valida el correo
+     */
+    public static $validarCorreo =[
+        'email' => 'required|string|lowercase|email|max:255|unique:' . User::class,
+        'email_confirmation' => 'required|string|lowercase|equal:email|email|max:255'
+    ];
+    /**
+     * Obten el personal perteneciente al usuario
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
     public function personal(): BelongsTo{
         return $this->belongsTo(Personal::class,'IdPersonal','IdPersonal');
     }
 
     /**
-     * Get all of the documento for the User
+     * Obten todos los documentos asociados a un usuario
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */

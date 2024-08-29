@@ -16,11 +16,22 @@ class Docente extends Model
         'GradoAcademico',
         'IdPersonal',
     ];
+    /**
+     * Variable que valida la agregacón o edición de un docente
+     */
+    public static $validarDocente = [
+        'GradoAcademico' => 'required',
+    ];
+    /**
+     * Obten el personal asociado a un docente
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
     public function personal(): HasOne{
         return $this->hasOne(Personal::class,'IdPersonal','IdPersonal');
     }
     /**
-     * Get the expediente associated with the Docente
+     * Obten el expediente asociado a un docente
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */

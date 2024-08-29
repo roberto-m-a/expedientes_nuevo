@@ -2,27 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\registroUsuarioAdminMailable;
 use App\Models\Administrador;
 use App\Models\Departamento;
 use App\Models\Docente;
 use App\Models\expediente;
-use App\Models\PeriodoEscolar;
 use App\Models\Personal;
 use App\Models\Secretaria;
 use App\Models\User;
-use DateTime;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 use App\Notifications\notificacionRegistroCorreo;
-use App\Notifications\NotificacionRegistroUsuario;
 use Inertia\Inertia;
 
 class personalController extends Controller
@@ -33,7 +26,7 @@ class personalController extends Controller
         $departamentos = Departamento::all();
         $user = User::find(Auth::user()->id);
         $personal = Personal::where('IdPersonal', Auth::user()->IdPersonal)->first();
-        if(Administrador::where('IdPersonal', $personal->IdPersonal)->first() == null)
+        if (Administrador::where('IdPersonal', $personal->IdPersonal)->first() == null)
             return Redirect::route('dashboard');
 
         $documentos_subidos = DB::table('documento')
@@ -68,58 +61,35 @@ class personalController extends Controller
     }
     public function nuevoPersonal(Request $request)
     {
-        $request->validate([
-            'Nombre' => 'required|string|max:50',
-            'Apellidos' => 'required|string|max:100',
-            'Sexo' => 'required',
-            'Departamento' => 'required',
-        ]);
-
-        DB::beginTransaction();
+        $request->validate(Personal::$validarPersonal);
         try {
-
+            DB::beginTransaction();
             $Personal = Personal::create([
                 'Nombre' => $request->Nombre,
                 'Apellidos' => $request->Apellidos,
                 'Sexo' => $request->Sexo,
                 'IdDepartamento' => $request->Departamento,
             ]);
-            event(new Registered($Personal));
 
             if ($request->tipoUsuario == 'Docente') {
-                $request->validate([
-                    'GradoAcademico' => 'required',
-                ]);
-                //dd($request->GradoAcademico);
+                $request->validate(Docente::$validarDocente);
                 $Docente = Docente::create([
                     'IdPersonal' => $Personal->IdPersonal,
                     'GradoAcademico' => $request->GradoAcademico,
                 ]);
-                event(new Registered($Docente));
-
-                $Expediente = expediente::create([
+                expediente::create([
                     'IdDocente' => $Docente->IdDocente,
                 ]);
-                event(new Registered($Expediente));
             }
 
             if ($request->tipoUsuario == 'Administrador') {
-                $Administrador = Administrador::create([
-                    'IdPersonal' => $Personal->IdPersonal,
-                ]);
-                event(new Registered($Administrador));
+                Administrador::create(['IdPersonal' => $Personal->IdPersonal,]);
             }
             if ($request->tipoUsuario == 'Secretaria') {
-                $Secretaria = Secretaria::create([
-                    'IdPersonal' => $Personal->IdPersonal,
-                ]);
-                event(new Registered($Secretaria));
+                Secretaria::create(['IdPersonal' => $Personal->IdPersonal,]);
             }
             if ($request->crearUsuario) {
-                $request->validate([
-                    'email' => 'required|string|lowercase|email|max:255|unique:' . User::class,
-                    'email_confirmation' => 'required|string|lowercase|email|max:255'
-                ]);
+                $request->validate(User::$validarCorreo);
                 if ($request->email !== $request->email_confirmation) {
                     throw ValidationException::withMessages([
                         'email' => 'Los correos no coinciden',
@@ -136,7 +106,6 @@ class personalController extends Controller
                     'IdPersonal' => $Personal->IdPersonal,
                 ]);
                 $user->notify(new notificacionRegistroCorreo());
-                //event(new Registered($user));
             }
 
             DB::commit();

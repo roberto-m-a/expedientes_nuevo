@@ -4,21 +4,24 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
-
 class Departamento extends Model
 {
+    use HasFactory;
+    
     protected $table = 'departamento';
     protected $primaryKey = 'IdDepartamento';
-    use HasFactory;
     protected $fillable = [
         'nombreDepartamento'
     ];
-    
     /**
-     * Get all of the documento for the Departamento
+     * Variable que valida la agregación o edición de un nuevo departamento
+     */
+    public static $departamentoValidacion = [
+        'nombreDepartamento' => 'required|string|regex:/^[\pL\s]+$/u|max:150|unique:'.Departamento::class,
+    ];
+    /**
+     * Obten todos los documentos de un departamento
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
@@ -28,7 +31,7 @@ class Departamento extends Model
     }
 
     /**
-     * Get all of the personal for the Departamento
+     * Obten todo el personal de un departamento
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */

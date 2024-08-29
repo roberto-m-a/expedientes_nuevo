@@ -5,30 +5,28 @@ namespace App\Http\Controllers;
 use App\Models\Administrador;
 use App\Models\Docente;
 use App\Models\PeriodoEscolar;
-use App\Models\Personal;
 use App\Models\Secretaria;
 use App\Models\User;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Redis;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class periodoEscolarController extends Controller
 {
-    //
+    /**
+     * 
+     */
     public function index()
     {
         $user = User::find(Auth::user()->id);
-        $personal = Personal::where('IdPersonal', Auth::user()->IdPersonal)->first();
-        if(Docente::where('IdPersonal', $personal->IdPersonal)->first() != null)
+        $personal = $user->personal;
+        if (Docente::where('IdPersonal', $personal->IdPersonal)->first() != null)
             return Redirect::route('dashboard');
 
         $periodosEscolares = PeriodoEscolar::with('documento')
-        ->withCount('documento as numDocumentos')
-        ->get();
+            ->withCount('documento as numDocumentos')
+            ->get();
         if (Secretaria::where('IdPersonal', Auth::user()->IdPersonal)->first() !== null) {
             return Inertia::render('Dashboard_secre_PeriodoEscolar', ['user' => $user, 'personal' => $personal, 'periodosEscolares' => $periodosEscolares]);
         }
@@ -36,54 +34,74 @@ class periodoEscolarController extends Controller
             return Inertia::render('Dashboard_admin_PeriodoEscolar', ['user' => $user, 'personal' => $personal, 'periodosEscolares' => $periodosEscolares]);
         }
     }
+    /**
+     * Crear un período escolar
+     *
+     * Valida los datos ingresados en la solicitud, si es exitosa, se creará en la base de datos
+     * el nuevo registro en la tabla de período escolar. Despues redirecciona a la vista de período escolar
+     * con un mensaje flash de la acción realizada.
+     *
+     * @param  \Illuminate\Http\Request  $request  La solicitud HTTP que contiene los datos del nuevo período escolar.
+     * 
+     * @return Illuminate\Support\Facades\Redirect  Redirige a la vista de período escolars con un mensaje de éxito.
+     */
     public function nuevoPeriodoEscolar(Request $request)
     {
         $this->validarPeriodoEscolar($request);
-            $periodoEscolar = PeriodoEscolar::create([
+        PeriodoEscolar::create([
+            'fechaInicio' => $request->fechaInicio,
+            'fechaTermino' => $request->fechaTermino,
+            'nombre_corto' => $request->nombre_corto,
+        ]);
+        return Redirect::route('periodoEscolar')->with('creacionCorrecta', 'Período escolar creado correctamente');
+    }
+    /**
+     * Edita un período escolar
+     *
+     * Busca el período escolar con el id que se proporciona en la solicitud para despues actualizar
+     * los campos del registro en la base de datos. Despues redirecciona a la vista de período escolar
+     * con un mensaje flash de la acción realizada.
+     *
+     * @param  \Illuminate\Http\Request  $request  La solicitud HTTP que contiene los datos del período escolar a editar.
+     * 
+     * @return Illuminate\Support\Facades\Redirect  Redirige a la vista de período escolars con un mensaje de éxito.
+     */
+    public function editarPeriodoEscolar(Request $request)
+    {
+        PeriodoEscolar::find($request->IdPeriodoEscolar)->update([
                 'fechaInicio' => $request->fechaInicio,
                 'fechaTermino' => $request->fechaTermino,
                 'nombre_corto' => $request->nombre_corto,
-            ]);
-            event(new Registered($periodoEscolar));
-            return Redirect::route('periodoEscolar');
+        ]);
+        return Redirect::route('periodoEscolar')->with('actualizacionCorrecta', 'Período escolar actualizado correctamente');
     }
-
-    public function editarPeriodoEscolar(Request $request)
-    {
-        $this->validarPeriodoEscolar($request);
-        $periodoEscolar = PeriodoEscolar::where('IdPeriodoEscolar', $request->IdPeriodoEscolar)->first();
-        $periodoEscolar->FechaInicio = $request->fechaInicio;
-        $periodoEscolar->FechaTermino = $request->fechaTermino;
-        $periodoEscolar->nombre_corto = $request->nombre_corto;
-        $periodoEscolar->save();
-    }
-
+    /**
+     * Valida un período escolar
+     *
+     * Valida el período escolar a través del modelo y si la validación no es correcta se retornarán los errores
+     * en la solicitud mandada.
+     *
+     * @param  \Illuminate\Http\Request  $request  La solicitud HTTP que contiene los datos del período escolar a validar.
+     */
     public function validarPeriodoEscolar(Request $request)
     {
-        $request->validate([
-            'fechaInicio' => 'required|string|max:50',
-            'fechaTermino' => 'required|string|max:50',
-            'nombre_corto' => 'required|string|max:50|unique:' . PeriodoEscolar::class,
-        ]);
-
-        if ($request->fechaInicio > $request->fechaTermino) {
-            throw ValidationException::withMessages([
-                'fechaInicio' => 'La fecha de inicio no puede ser despues de la fecha de termino',
-                'fechaTermino' => 'La fecha de termino no puede ser antes de la fecha de inicio',
-            ]);
-        }
-
-        if ($request->fechaInicio == $request->fechaTermino) {
-            throw ValidationException::withMessages([
-                'fechaInicio' => 'Las fechas no pueden ser iguales',
-                'fechaTermino' => 'Las fechas no pueden ser iguales',
-            ]);
-        }
+        $request->validate(PeriodoEscolar::$validacionPeriodoEscolar);
     }
-
+    /**
+     * Borra un período escolar
+     *
+     * Busca el período escolar con el id que se proporciona en la solicitud para despues borrar
+     * el registro en la base de datos. Despues redirecciona a la vista de período escolar con
+     * un mensaje flash de la acción realizada.
+     *
+     * @param  \Illuminate\Http\Request  $request  La solicitud HTTP que contiene los datos del período escolar a borrar.
+     * 
+     * @return Illuminate\Support\Facades\Redirect  Redirige a la vista de período escolars con un mensaje de éxito.
+     */
     public function borrarPeriodoEscolar(Request $request)
     {
         $periodoEscolar = PeriodoEscolar::where('IdPeriodoEscolar', $request->IdPeriodoEscolar);
         $periodoEscolar->delete();
+        return Redirect::route('tipoDoc')->with('borradoCorrecto', 'Período escolar borrado correctamente');
     }
 }

@@ -27,31 +27,20 @@ class ProfileController extends Controller
         $user = User::find(Auth::user()->id);
         $departamentos = Departamento::all();
         $personal = Personal::where('IdPersonal', Auth::user()->IdPersonal)->first();
-        if(Secretaria::where('IdPersonal', Auth::user()->IdPersonal)->first()!==null){
-            return Inertia::render('Profile/Edit_secretaria', [
-                'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
-                'status' => session('status'),
-                'user' =>$user,
-                'personal'=>$personal,
-                'departamentos'=>$departamentos,
-            ]);  
-        }
-        if(Administrador::where('IdPersonal',Auth::user()->IdPersonal)->first()!==null){
-            return Inertia::render('Profile/Edit_admin', [
-                'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
-                'status' => session('status'),
-                'user' =>$user,
-                'personal'=>$personal,
-                'departamentos'=>$departamentos,
-            ]);    
-        }
-        return Inertia::render('Profile/Edit', [
+        $data = [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
             'user' =>$user,
             'personal'=>$personal,
             'departamentos'=>$departamentos,
-        ]);
+        ];
+        if(Secretaria::where('IdPersonal', Auth::user()->IdPersonal)->first()!==null){
+            return Inertia::render('Profile/Edit_secretaria', $data);  
+        }
+        if(Administrador::where('IdPersonal',Auth::user()->IdPersonal)->first()!==null){
+            return Inertia::render('Profile/Edit_admin', $data);    
+        }
+        return Inertia::render('Profile/Edit', $data);
     }
 
     /**

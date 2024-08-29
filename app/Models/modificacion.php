@@ -20,7 +20,7 @@ class modificacion extends Model
     ];
 
     /**
-     * Get the documento associated with the modificacion
+     * Obten el documento asociado a la modificacion
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
@@ -30,7 +30,7 @@ class modificacion extends Model
     }
 
     /**
-     * Get the user associated with the modificacion
+     * Obten el usuario asociado a la modificacion
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */

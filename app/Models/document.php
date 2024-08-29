@@ -26,7 +26,7 @@ class document extends Model
         'Dependencia',
     ];
     /**
-     * Get the user associated with the document
+     * Obten el usuario asociado a un documento
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
@@ -35,7 +35,7 @@ class document extends Model
         return $this->hasOne(User::class, 'id', 'IdUsuario');
     }
     /**
-     * Get the user associated with the document
+     * Obten el expediente asociado a un documento
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
@@ -44,7 +44,7 @@ class document extends Model
         return $this->hasOne(expediente::class,'IdExpediente','IdExpediente');
     }
     /**
-     * Get the periodoEscolar associated with the document
+     * Obten el periodo escolar asociado a un documento
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
@@ -54,7 +54,7 @@ class document extends Model
     }
 
     /**
-     * Get the tipoDocumento associated with the document
+     * Obten el tipo de documento asociado a un documento
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
@@ -64,7 +64,7 @@ class document extends Model
     }
 
     /**
-     * Get the departamento associated with the document
+     * Obten el departamento asociado a un documento
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */

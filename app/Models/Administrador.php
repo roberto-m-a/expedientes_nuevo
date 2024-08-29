@@ -14,6 +14,11 @@ class Administrador extends Model
     protected $fillable = [
         'IdPersonal',
     ];
+    /**
+     * Obten el personal asociado a un administrador
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
     public function personal(): HasOne{
         return $this->hasOne(Personal::class, 'IdPersonal', 'IdPersonal');
     }

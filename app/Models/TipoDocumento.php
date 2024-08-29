@@ -15,7 +15,13 @@ class TipoDocumento extends Model
         'nombreTipoDoc',
     ];
     /**
-     * Obtener la coleccion de documentos con relacion al TipoDocumento
+     * Variable que valida la agregación o edición de un tipo de documento
+     */
+    public static $validacionTipoDocumento = [
+        'nombreTipoDoc' => 'required|string|regex:/^[\pL\s]+$/u|max:100|unique:'.TipoDocumento::class,
+    ];
+    /**
+     * Obten todos los documentos asociados a un tipo de documento
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */

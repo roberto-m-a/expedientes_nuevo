@@ -28,6 +28,8 @@ class RegisteredUserController extends Controller
     }
 
     /**
+     * Crear un usuario en el sistema
+     * 
      * Este metodo sirve para crear a un usuario Docente desde la vista de registro de usuario de la pagina
      * El usuario debe de introducir al formulario su nombre, sus apellidos y su correo, asi como una confirmacion del correo
      * El correo electronico debe tener el dominio de @itoaxaca.edu.mx o bien @oaxaca.tecnm.mx

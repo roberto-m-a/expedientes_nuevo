@@ -42,6 +42,9 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'exitoDocumento' => fn () => $request->session()->get('exitoDocumento'),
                 'sinRegistros' => fn() => $request->session()->get('sinRegistros'),
+                'borradoCorrecto' => fn() => $request->session()->get('borradoCorrecto'),
+                'actualizacionCorrecta' => fn() => $request->session()->get('actualizacionCorrecta'),
+                'creacionCorrecta' => fn() => $request->session()->get('creacionCorrecta'),
             ],
         ];
     }
