@@ -13,9 +13,9 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Validation\ValidationException;
 
 class RegisteredUserController extends Controller
 {
@@ -30,83 +30,54 @@ class RegisteredUserController extends Controller
     /**
      * Crear un usuario en el sistema
      * 
-     * Este metodo sirve para crear a un usuario Docente desde la vista de registro de usuario de la pagina
-     * El usuario debe de introducir al formulario su nombre, sus apellidos y su correo, asi como una confirmacion del correo
-     * El correo electronico debe tener el dominio de @itoaxaca.edu.mx o bien @oaxaca.tecnm.mx
-     * El metodo redireccionará al dashboard del usuario siempre y cuando el usuario hay verificado su correo electronico
-     * @throws \Illuminate\Validation\ValidationException
+     * El método valida los datos de la petición para después crear los registros necesarios para la agregación
+     * de un usuario del tipo docente
+     * 
+     * @param Illuminate\Http\Request Petición HTTP con los datos necesarios para crear un usuario de tipo Docente
+     * 
+     * @return Illuminate\Support\Facades\Redirect redirecciona a la vista HOME para mostrar un aviso de que 
+     * es necesario verificar su correo electrónico y despues de eso
      */
     public function store(Request $request): RedirectResponse
     {
-        $request->validate([
-            'name' => 'required|string|max:50',
-            'lastname' => 'required|string|max:101',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
-            'email_confirmation' => 'required|string|lowercase|email|max:255'
-        ]);
-        if($request->email !== $request->email_confirmation){
-            throw ValidationException::withMessages([
-                'email' => 'Los correos no coinciden',
-            ]);
-        }
-        if(strpos($request->email, '@itoaxaca.edu.mx')==false && strpos($request->email, '@oaxaca.tecnm.mx')==false ){
-            throw ValidationException::withMessages([
-                'email' => 'El dominio debe ser de la institución (@itoaxaca.edu.mx o @oaxaca.tecnm.mx)',
-            ]);
-        }
-        
+        $request->validate(Personal::$validarPersonalRegistro);
+        $request->validate(User::$validarCorreo);
+        User::validarDominioCorreo($request->email);
         $personal = Personal::create([
             'Nombre' => $request->name, 
             'Apellidos' => $request->lastname,
         ]);
-        event(new Registered($personal));
-        
         $user = User::create([
             'email' => $request->email,
             'IdPersonal' => $personal->IdPersonal,
         ]);
-        
         event(new Registered($user));
-
         $docente = Docente::create([
             'GradoAcademico'=>'Licenciatura',
             'IdPersonal' => $personal ->IdPersonal,
         ]);
-        //dd($docente);
-        event(new Registered($docente));
-
-        $Expediente = expediente::create([
+        expediente::create([
             'IdDocente' => $docente->IdDocente, 
-        ]);
-
-        event(new Registered($Expediente));
-        
+        ]);        
         Auth::login($user);
-
         return redirect(RouteServiceProvider::HOME);
     }
     /**
      * El metodo permite validar unicamente el correo electronico del usuario para que el administrador pueda añadir
      * el usuario cuando este no se creo durante el registro del personal
+     * 
+     * @param Illuminate\Http\Request Petición HTTP con los datos a validar
      */
     public function validarUsuario(Request $request){
-        $request->validate([
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
-            'email_confirmation' => 'required|string|lowercase|email|max:255',
-        ]);
-        if($request->email !== $request->email_confirmation){
-            throw ValidationException::withMessages([
-                'email' => 'Los correos no coinciden',
-            ]);
-        }
-        if(strpos($request->email, '@itoaxaca.edu.mx')==false && strpos($request->email, '@oaxaca.tecnm.mx')==false ){
-            throw ValidationException::withMessages([
-                'email' => 'El dominio debe ser de la institución (@itoaxaca.edu.mx o @oaxaca.tecnm.mx)',
-            ]);
-        }
+        $request->validate(User::$validarCorreo);
+        User::validarDominioCorreo($request->email);
     }
     /**
-     * Crea al usuario previamente validado y manda una notificacion al correo del usuario para que este verifique su correo. 
+     * Crea al usuario previamente validado y manda una notificacion al correo del usuario para que este verifique su correo.
+     * 
+     * @param Illuminate\Http\Request Peticion HTTP con los datos necesarios para la creación de un nuevo usaurio
+     * 
+     * @return Illuminate\Support\Facades\Redirect Redirecciona a la página de personal con un mensaje flash de la acción realizada
      */
     public function aniadirUsuario(Request $request){
         $user = User::create([
@@ -114,5 +85,6 @@ class RegisteredUserController extends Controller
             'IdPersonal' => $request->IdPersonal,
         ]);
         $user->notify(new notificacionRegistroCorreo());
+        return Redirect::route('personal')->with('creacionCorrecta','Se ha creado el usuario correctamente');
     }
 }

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Administrador;
-use App\Models\Docente;
 use App\Models\PeriodoEscolar;
 use App\Models\Secretaria;
 use App\Models\User;
@@ -21,7 +20,7 @@ class periodoEscolarController extends Controller
     {
         $user = User::find(Auth::user()->id);
         $personal = $user->personal;
-        if (Docente::where('IdPersonal', $personal->IdPersonal)->first() != null)
+        if ($personal->docente != null)
             return Redirect::route('dashboard');
 
         $periodosEscolares = PeriodoEscolar::with('documento')

@@ -15,6 +15,8 @@ import 'datatables.net-responsive';
 import 'datatables.net-select';
 import DataTablesLib from 'datatables.net';
 import AuthenticatedLayout_admin from '@/Layouts/AuthenticatedLayout_admin.vue';
+import DepartamentoFormCreate from '@/Components/ComponentsForms/DepartamentoFormCreate.vue';
+import DepartamentoFormEdit from '@/Components/ComponentsForms/DepartamentoFormEdit.vue';
 DataTable.use(DataTablesCore);
 DataTable.use(DataTablesLib);
 
@@ -85,114 +87,28 @@ const props = defineProps({
     }
 });
 
-const abrir = ref(false);
-console.log(abrir);
+const abrir = ref(false); //Variable para manejar el componente de DepartamentoFormCreate
+const abrirEdit = ref(false); //Variable para manejar el componente de DepartamentoFormEdit
+const departamento = ref(null); //Variable para manejar el departamento del componente DepartamentoFormEdit
 
-const form = useForm({
-    nombreDepartamento: '',
-});
-
-const nuevoDepartamento = () => {
-    form.put(route('departamento.nuevo'), {
-        preserveScroll: true,
-        onSuccess: () => {
-            abrir.value = false;
-            form.reset()
-        },
-        onError: () => {
-            console.log(form.errors);
-        },
-    });
-};
-
-//Editar departamento
-const formEdit = useForm({
+const formDelete = useForm({
     idDepartamento: '',
-    nombreDepartamento: '',
-});
-const editarDepartamento = () => {
-    formEdit.post(route('validar.departamento'), {
-        preserveScroll: true,
-        onSuccess: () => {
-            const Departamento = props.departamentos.find(a => a.IdDepartamento === formEdit.idDepartamento);
-            let registrosDocs = Departamento.numDocumentos;
-            let registrosPers = Departamento.numPersonal;
-            const randomCode = Math.floor(1000 + Math.random() * 9000); // Genera un código aleatorio de 4 dígitos
-            Swal.fire({
-                title: 'Confirmación necesaria',
-                text: `Esta accion afectará a ${registrosDocs} documentos y a ${registrosPers} personales. Para continuar, ingresa el código de confirmación: ${randomCode}`,
-                input: 'number',
-                inputAttributes: {
-                    maxlength: 4,
-                    autocapitalize: 'off',
-                    autocorrect: 'off'
-                },
-                showCancelButton: true,
-                confirmButtonText: 'Confirmar',
-                cancelButtonText: 'Cancelar',
-                preConfirm: (inputValue) => {
-                    return new Promise((resolve) => {
-                        if (inputValue === randomCode.toString()) {
-                            resolve(true);
-                        } else {
-                            Swal.showValidationMessage('Código incorrecto');
-                            resolve(false);
-                        }
-                    });
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire('Edición confirmada', 'El código es correcto.', 'success');
-                    // Aquí puedes agregar la lógica para realizar la acción deseada después de la confirmación
-                    formEdit.put(route('departamento.editar'), {
-                        preserveScroll: true,
-                        onSuccess: () => {
-                            abrirEdit.value = false;
-                            formEdit.reset()
-                        },
-                        onError: () => {
-                            console.log(formEdit.errors);
-                        },
-                    });
-                } else if (result.dismiss === Swal.DismissReason.cancel) {
-                    abrirEdit.value = false;
-                    formEdit.reset();
-                    Swal.fire('Acción cancelada', 'No se realizó ninguna acción.', 'error');
-                }
-            });
-        },
-        onError: () => {
-            console.log('no pasó')
-            console.log(formEdit.errors);
-        },
-    });
-
-
-};
-
-const abrirEdit = ref(false);
-
+})
 onMounted(() => {
-
-    // Manejar clic en el botón de editarDepartamento
+    // Manejar clic en del botón con la clase EditarDepartamento
     $('#TablaDepartamentos').on('click', '.EditarDepartamento', function () {
         abrirEdit.value = true;
-        formEdit.idDepartamento = $(this).data('id');
-
-        const departamento = props.departamentos.find(a => a.IdDepartamento === formEdit.idDepartamento);
-        formEdit.nombreDepartamento = departamento.nombreDepartamento;
+        const id = $(this).data('id');
+        departamento.value = props.departamentos.find(a => a.IdDepartamento === id);
     });
-
+    //Manejar el clic del botón con la clase BorrarDepartamento
     $('#TablaDepartamentos').on('click', '.BorrarDepartamento', function () {
-        formEdit.idDepartamento = $(this).data('id');
-
-        const departamento = props.departamentos.find(a => a.IdDepartamento === formEdit.idDepartamento);
-        formEdit.nombreDepartamento = departamento.nombreDepartamento;
-
+        formDelete.idDepartamento = $(this).data('id');
+        const departamentoD = props.departamentos.find(a => a.IdDepartamento === formDelete.idDepartamento);
         const randomCode = Math.floor(1000 + Math.random() * 9000); // Genera un código aleatorio de 4 dígitos
         Swal.fire({
             title: 'Confirmación necesaria',
-            text: `¿Desea borrar ${departamento.nombreDepartamento}?. 
+            text: `¿Desea borrar ${departamentoD.nombreDepartamento}?. 
             Para continuar, ingresa el código de confirmación: ${randomCode}`,
             input: 'number',
             footer: 'Esta acción se puede realizar ya que el registro no tiene relaciones con otros registros.',
@@ -216,12 +132,10 @@ onMounted(() => {
             }
         }).then((result) => {
             if (result.isConfirmed) {
-                Swal.fire('Borrado realizado', 'El código es correcto.', 'success');
-                // Aquí puedes agregar la lógica para realizar la acción deseada después de la confirmación
-                formEdit.delete(route('departamento.borrar'), {
+                formDelete.delete(route('departamento.borrar'), {
                     preserveScroll: true,
                     onSuccess: () => {
-                        formEdit.reset()
+                        formDelete.reset()
                     },
                     onError: () => {
                         console.log(formEdit.errors);
@@ -248,56 +162,9 @@ onMounted(() => {
             </div>
         </template>
         <!-- Modal para editar departamento -->
-        <Modal :show='abrirEdit' >
-            <div class="p-8 flex flex-col space-y-4">
-                <div class="flex flex-row-reverse items-end justify-between overflow-hidden">
-                    <DangerButton @click="abrirEdit = false">X</DangerButton>
-                </div>
-                <div>
-                    <p>
-                        Edita el departamento que seleccionaste
-                    </p>
-                    <form @submit.prevent="editarDepartamento">
-                        <InputLabel for="nombreDepartamento" value="Nombre del departamento" class="pt-2" />
-                        <TextInput id="nombreDepartamento" type="text" class="mt-1 block w-full"
-                            v-model="formEdit.nombreDepartamento" autofocus required />
-                        <InputError class="mt-2" :message="formEdit.errors.nombreDepartamento" />
-                        <div class="flex flex-items justify-between items-center pt-4">
-                            <p class="text-red-500 font-semibold">
-                                *Corrobore su información antes de guardarla
-                            </p>
-                            <PrimaryButton>Guardar</PrimaryButton>
-                        </div>
-                    </form>
-
-                </div>
-            </div>
-        </Modal>
+        <DepartamentoFormEdit v-model:abrirModal="abrirEdit" v-model:departamento="departamento"></DepartamentoFormEdit>
         <!-- Modal para agregar un nuevo departamento -->
-        <Modal :show='abrir'>
-            <div class="p-8 flex flex-col space-y-4">
-                <div class="flex flex-row-reverse items-end justify-between overflow-hidden">
-                    <DangerButton @click="abrir = false">X</DangerButton>
-                </div>
-                <div>
-                    <p>
-                        Favor de rellenar el único campo visible para registrar un nuevo departamento.
-                    </p>
-                    <form @submit.prevent="nuevoDepartamento">
-                        <InputLabel for="nombreDepartamento" value="Nombre del departamento" class="pt-2" />
-                        <TextInput id="nombreDepartamento" type="text" class="mt-1 block w-full"
-                            v-model="form.nombreDepartamento" autofocus required />
-                        <InputError class="mt-2" :message="form.errors.nombreDepartamento" />
-                        <div class="flex flex-items justify-between items-center pt-4">
-                            <p class="text-red-500 font-semibold">
-                                *Corrobore su información antes de guardarla
-                            </p>
-                            <PrimaryButton>Guardar</PrimaryButton>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </Modal>
+        <DepartamentoFormCreate v-model:abrirModal="abrir"></DepartamentoFormCreate>
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-4">
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4 space-y-3">

@@ -1,20 +1,16 @@
 <script setup>
 import AddButton from '@/Components/AddButton.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import Modal from '@/Components/Modal.vue';
-import DangerButton from '@/Components/DangerButton.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import TextInput from '@/Components/TextInput.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
 import { ref, onMounted } from 'vue';
-import InputError from '@/Components/InputError.vue';
+import AuthenticatedLayout_admin from '@/Layouts/AuthenticatedLayout_admin.vue';
+import PeriodoEscolarFormCreate from '@/Components/ComponentsForms/PeriodoEscolarFormCreate.vue';
 
 import DataTable from 'datatables.net-vue3';
 import DataTablesCore from 'datatables.net';
 import 'datatables.net-responsive';
 import 'datatables.net-select';
 import DataTablesLib from 'datatables.net';
-import AuthenticatedLayout_admin from '@/Layouts/AuthenticatedLayout_admin.vue';
+import PeriodoEscolarFormEdit from '@/Components/ComponentsForms/PeriodoEscolarFormEdit.vue';
 DataTable.use(DataTablesCore);
 DataTable.use(DataTablesLib);
 
@@ -88,119 +84,27 @@ const props = defineProps({
     },
 });
 
-const abrir = ref(false);
-
-const fecha = new Date();
-const fechaActual = fecha.getFullYear() + '-' + ((fecha.getMonth() + 1) < 10 ? '0' + (fecha.getMonth() + 1) : (fecha.getMonth() + 1)) + '-' + ((fecha.getDate()) < 10 ? '0' + (fecha.getDate()) : (fecha.getDate()));
-console.log(abrir);
-
-const form = useForm({
-    fechaInicio: '',
-    fechaTermino: '',
-    nombre_corto: '',
-});
-
-const nuevoPeriodoEscolar = () => {
-    form.put(route('periodoEscolar.nuevo'), {
-        preserveScroll: true,
-        onSuccess: () => {
-            abrir.value = false;
-            form.reset()
-        },
-        onError: () => {
-            console.log(form.errors);
-        },
-    });
-};
-
-//Editar un periodo escolar
-
-const editarPeriodoEscolar = () => {
-    formEdit.post(route('validar.periodoEscolar'), {
-        preserveScroll: true,
-        onSuccess: () => {
-            const periodoEscolar = props.periodosEscolares.find(a => a.IdPeriodoEscolar === formEdit.IdPeriodoEscolar);
-            let registros = periodoEscolar.numDocumentos;
-            const randomCode = Math.floor(1000 + Math.random() * 9000); // Genera un código aleatorio de 4 dígitos
-            Swal.fire({
-                title: 'Confirmación necesaria',
-                text: `Esta accion afectará a ${registros} registros. Para continuar, ingresa el código de confirmación: ${randomCode}`,
-                input: 'number',
-                inputAttributes: {
-                    maxlength: 4,
-                    autocapitalize: 'off',
-                    autocorrect: 'off'
-                },
-                showCancelButton: true,
-                confirmButtonText: 'Confirmar',
-                cancelButtonText: 'Cancelar',
-                preConfirm: (inputValue) => {
-                    return new Promise((resolve) => {
-                        if (inputValue === randomCode.toString()) {
-                            resolve(true);
-                        } else {
-                            Swal.showValidationMessage('Código incorrecto');
-                            resolve(false);
-                        }
-                    });
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire('Edición confirmada', 'El código es correcto.', 'success');
-                    formEdit.put(route('periodoEscolar.editar'), {
-                        preserveScroll: true,
-                        onSuccess: () => {
-                            abrirEdit.value = false;
-                            formEdit.reset()
-                        },
-                        onError: () => {
-                            console.log(formEdit.errors);
-                        },
-                    });
-                } else if (result.dismiss === Swal.DismissReason.cancel) {
-                    abrirEdit.value = false;
-                    formEdit.reset();
-                    Swal.fire('Acción cancelada', 'No se realizó ninguna acción.', 'error');
-                }
-            });
-        },
-        onError: () => {
-            console.log(formEdit.errors);
-        },
-    });
-};
-const formEdit = useForm({
+const abrir = ref(false); //constante para controlar el componente PeriodoEscolarFormCreate
+const abrirEdit = ref(false); //constante para controlar el componente PeriodoEscolarFormEdit
+const periodoEscolar = ref(null); //constante para manejar el periodo a editar en el componente PeriodoEscolarFormEdit
+//formulario para borrar un periodo escolar
+const formDelete = useForm({
     IdPeriodoEscolar: '',
-    fechaInicio: '',
-    fechaTermino: '',
-    nombre_corto: '',
-});
-
-const abrirEdit = ref(false);
-
-
+})
 onMounted(() => {
-
     // Manejar clic en el botón de editarDoc
     $('#TablaPeriodos').on('click', '.EditarPeriodo', function () {
+        const id = $(this).data('id');
+        periodoEscolar.value = props.periodosEscolares.find(a => a.IdPeriodoEscolar === id);
         abrirEdit.value = true;
-        formEdit.IdPeriodoEscolar = $(this).data('id');
-        const periodoEscolar = props.periodosEscolares.find(a => a.IdPeriodoEscolar === formEdit.IdPeriodoEscolar);
-        formEdit.fechaInicio = periodoEscolar.fechaInicio;
-        formEdit.fechaTermino = periodoEscolar.fechaTermino;
-        formEdit.nombre_corto = periodoEscolar.nombre_corto;
     });
     $('#TablaPeriodos').on('click', '.BorrarPeriodo', function () {
-        formEdit.IdPeriodoEscolar = $(this).data('id');
-        const periodoEscolar = props.periodosEscolares.find(a => a.IdPeriodoEscolar === formEdit.IdPeriodoEscolar);
-        formEdit.fechaInicio = periodoEscolar.fechaInicio;
-        formEdit.fechaTermino = periodoEscolar.fechaTermino;
-        formEdit.nombre_corto = periodoEscolar.nombre_corto;
-
+        formDelete.IdPeriodoEscolar = $(this).data('id');
+        const periodoEscolarD = props.periodosEscolares.find(a => a.IdPeriodoEscolar === formDelete.IdPeriodoEscolar);
         const randomCode = Math.floor(1000 + Math.random() * 9000); // Genera un código aleatorio de 4 dígitos
         Swal.fire({
             title: 'Confirmación necesaria',
-            text: `¿Desea borrar ${periodoEscolar.nombre_corto}?. 
+            text: `¿Desea borrar ${periodoEscolarD.nombre_corto}?. 
             Para continuar, ingresa el código de confirmación: ${randomCode}`,
             input: 'number',
             footer: 'Esta acción se puede realizar ya que el registro no tiene relaciones con otros registros.',
@@ -224,12 +128,10 @@ onMounted(() => {
             }
         }).then((result) => {
             if (result.isConfirmed) {
-                Swal.fire('Borrado realizado', 'El código es correcto.', 'success');
-                // Aquí puedes agregar la lógica para realizar la acción deseada después de la confirmación
-                formEdit.delete(route('periodoEscolar.borrar'), {
+                formDelete.delete(route('periodoEscolar.borrar'), {
                     preserveScroll: true,
                     onSuccess: () => {
-                        formEdit.reset()
+                        formDelete.reset()
                     },
                     onError: () => {
                         console.log(formEdit.errors);
@@ -240,14 +142,11 @@ onMounted(() => {
             }
         });
     });
-
 });
 </script>
 
 <template>
-
     <Head title="Períodos Escolares" />
-
     <AuthenticatedLayout_admin :user="user" :personal="personal">
         <template #header>
             <div class="flex flex-row items-end space-x-4">
@@ -256,80 +155,11 @@ onMounted(() => {
             </div>
         </template>
         <!-- Modal para editar un período escolar -->
-        <Modal :show='abrirEdit'>
-            <div class="p-8 flex flex-col space-y-4">
-                <div class="flex flex-row-reverse items-end justify-between overflow-hidden">
-                    <DangerButton @click="abrirEdit = false">X</DangerButton>
-                </div>
-                <div>
-                    <p>
-                        Edita los datos del período escolar seleccionado
-                    </p>
-                    <form @submit.prevent="editarPeriodoEscolar">
-                        <div class="space-y-2">
-                            <InputLabel for="fechaInicio" value="Fecha de inicio" class="" />
-                            <TextInput id="fechaInicio" type="date" class="block w-full" v-model="formEdit.fechaInicio"
-                                required />
-                            <InputError class="mt-2" :message="formEdit.errors.fechaInicio" />
-                            <InputLabel for="fechaTermino" value="Fecha de término" class="" />
-                            <TextInput id="fechaTermino" type="date" class="block w-full"
-                                v-model="formEdit.fechaTermino" required />
-                            <InputError class="mt-2" :message="formEdit.errors.fechaTermino" />
-                        </div>
-                        <InputLabel for="nombre_corto" value="Nombre corto" class="pt-2" />
-                        <TextInput id="nombre_corto" type="text" class="mt-1 block w-full"
-                            v-model="formEdit.nombre_corto" autofocus required />
-                        <InputError class="mt-2" :message="formEdit.errors.nombre_corto" />
-                        <div class="flex flex-items justify-between items-center pt-4">
-                            <p class="text-red-500 font-semibold">
-                                *Corrobore su información antes de guardarla
-                            </p>
-                            <PrimaryButton>Guardar</PrimaryButton>
-                        </div>
-                    </form>
-
-                </div>
-            </div>
-        </Modal>
+        <PeriodoEscolarFormEdit v-model:abrirModal="abrirEdit" v-model:periodoEscolar="periodoEscolar"></PeriodoEscolarFormEdit>
         <!-- Modal para agregar un nuevo período escolar -->
-        <Modal :show='abrir'>
-            <div class="p-8 flex flex-col space-y-4">
-                <div class="flex flex-row-reverse items-end justify-between overflow-hidden">
-                    <DangerButton @click="abrir = false">X</DangerButton>
-                </div>
-                <div>
-                    <p>
-                        Favor de rellenar los campos para registrar un nuevo período escolar.
-                    </p>
-                    <form @submit.prevent="nuevoPeriodoEscolar">
-                        <div class="space-y-2">
-                            <InputLabel for="fechaInicio" value="Fecha de inicio" class="" />
-                            <TextInput id="fechaInicio" type="date" class="block w-full"
-                                v-model="form.fechaInicio" required />
-                            <InputError class="mt-2" :message="form.errors.fechaInicio" />
-                            <InputLabel for="fechaTermino" value="Fecha de término" class="" />
-                            <TextInput id="fechaTermino" type="date" class="block w-full"
-                                v-model="form.fechaTermino" required />
-                            <InputError class="mt-2" :message="form.errors.fechaTermino" />
-                        </div>
-                        <InputLabel for="nombre_corto" value="Nombre corto" class="pt-2" />
-                        <TextInput id="nombre_corto" type="text" class="mt-1 block w-full"
-                            v-model="form.nombre_corto" autofocus required />
-                        <InputError class="mt-2" :message="form.errors.nombre_corto" />
-                        <div class="flex flex-items justify-between items-center pt-4">
-                            <p class="text-red-500 font-semibold">
-                                *Corrobore su información antes de guardarla
-                            </p>
-                            <PrimaryButton>Guardar</PrimaryButton>
-                        </div>
-                    </form>
-
-                </div>
-            </div>
-        </Modal>
+        <PeriodoEscolarFormCreate v-model:abrirModal="abrir"></PeriodoEscolarFormCreate>
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-4">
-                
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4 space-y-3">
                     <div class="flex flex-auto justify-end">
                         <AddButton @click="abrir = true">

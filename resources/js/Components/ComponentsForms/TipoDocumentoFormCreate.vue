@@ -1,11 +1,29 @@
-<script>
+<script setup>
+import Modal from '@/Components/Modal.vue';
+import DangerButton from '@/Components/DangerButton.vue';
+import InputLabel from '@/Components/InputLabel.vue';
+import TextInput from '@/Components/TextInput.vue';
+import PrimaryButton from '@/Components/PrimaryButton.vue';
+import InputError from '@/Components/InputError.vue';
+import { useForm } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
+
 const props = defineProps({
-    abrir:{
+    modelValue: {
         type: Boolean,
     },
-    tipoDocs: {
-        type: Object,
-    }
+});
+
+const emit = defineEmits(['update:modelValue']);
+
+const abrirModal = ref(props.modelValue);
+
+watch(() => props.modelValue, (newVal) => {
+    abrirModal.value = newVal;
+});
+
+watch(abrirModal, (newVal) => {
+    emit('update:modelValue', newVal);
 });
 
 const form = useForm({
@@ -16,8 +34,8 @@ const nuevoTipoDoc = () => {
     form.put(route('tipoDoc.nuevo'), {
         preserveScroll: true,
         onSuccess: () => {
-            abrir.value = false;
-            form.reset()
+            abrirModal.value = false;
+            form.reset();
         },
         onError: () => {
             console.log(form.errors);
@@ -25,11 +43,12 @@ const nuevoTipoDoc = () => {
     });
 };
 </script>
+
 <template>
-    <Modal :show='props.abrir'>
+    <Modal :show="abrirModal" @close="abrirModal = false">
         <div class="p-8 flex flex-col space-y-4">
             <div class="flex flex-row-reverse items-end justify-between overflow-hidden">
-                <DangerButton @click="abrir = false; form.reset();">X</DangerButton>
+                <DangerButton @click="abrirModal = false; form.reset();">X</DangerButton>
             </div>
             <div>
                 <p>
@@ -40,7 +59,7 @@ const nuevoTipoDoc = () => {
                     <TextInput id="tipoDoc" type="text" class="mt-1 block w-full" v-model="form.nombreTipoDoc" autofocus
                         required />
                     <InputError class="mt-2" :message="form.errors.nombreTipoDoc" />
-                    <div class="flex flex-items justify-between items-center pt-4">
+                    <div class="flex justify-between items-center pt-4">
                         <p class="text-red-500 font-semibold">
                             *Corrobore su información antes de guardarla
                         </p>

@@ -8,7 +8,6 @@ use App\Models\Departamento;
 use App\Models\Personal;
 use App\Models\Secretaria;
 use App\Models\User;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,7 +19,11 @@ use Inertia\Response;
 class ProfileController extends Controller
 {
     /**
-     * Display the user's profile form.
+     * Renderiza la vista con la información del perfil en los formularios.
+     * 
+     * @param \Illuminate\Http\Request  $request  La solicitud HTTP que contiene los datos del perfil a editar.
+     * 
+     * @return Inertia\Inertia Renderiza la vista correspondiente al tipo de usuario.
      */
     public function edit(Request $request): Response
     {
@@ -44,28 +47,30 @@ class ProfileController extends Controller
     }
 
     /**
-     * Update the user's profile information.
+     * Actualizar la información de perfil de usuario
+     * 
+     * Se validan los campos correspondientes para despues actualizar los datos del perfil
+     * Se verifica si el correo electronico cambió para tambien actualizar los datos correspondientes al usuario
+     * 
+     * @param App\Http\Requests\ProfileUpdateRequest Solicitud HTTP que contiene los datos a editar
+     * 
+     * @return Illuminate\Support\Facades\Redirect Redirecciona a la vista del perfil con los datos actualizados
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
         $request->user()->fill($request->validated());
-        $personal = Personal::where('IdPersonal', Auth::user()->IdPersonal)->first();
-        $personal->Nombre = $request->name;
-        $personal->Apellidos = $request ->lastname;
-        $personal->IdDepartamento = $request->Departamento['IdDepartamento'];
-        $personal->Sexo = $request->Sexo;
-        $personal->save();
-        
-        if(strpos($request->email, '@itoaxaca.edu.mx')==false && strpos($request->email, '@oaxaca.tecnm.mx')==false ){
-            throw ValidationException::withMessages([
-                'email' => 'El dominio debe ser de la institución (@itoaxaca.edu.mx o @oaxaca.tecnm.mx)',
-            ]);
-        }else{
-            if ($request->user()->isDirty('email')) {
-                $request->user()->email_verified_at = null;
-            }
+        User::validarDominioCorreo($request->email);
+
+        Personal::find(Auth::user()->IdPersonal)->update([
+            'Nombre' => $request->name,
+            'Apellidos' => $request ->lastname,
+            'IdDepartamento' => $request->Departamento['IdDepartamento'],
+            'Sexo' => $request->Sexo,
+        ]);   
+        if ($request->user()->isDirty('email')) {
+            $request->user()->email_verified_at = null;
             $request->user()->save();
         }
-        return Redirect::route('profile.edit');
+        return Redirect::route('profile.edit')->with('actualizacionCorrecta', 'Se han actualizado los datos en tu perfil');
     }
 }
