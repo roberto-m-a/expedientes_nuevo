@@ -60,7 +60,9 @@ class tipoDocumentoController extends Controller
         TipoDocumento::create([
             "nombreTipoDoc" => $request->nombreTipoDoc,
         ]);
-        return Redirect::route('tipoDoc')->with('creacionCorrecta', 'Tipo de documento creado correctamente');
+        //return response()->json(['message' => 'Tipo de documento creado correctamente', 'redirect' => route('tipoDoc'), 'flash' => 'Tipo de documento creado con éxito']);
+        //return redirect()->route('tipoDoc')->with('creacionCorrecta', 'Tipo de documento creado correctamente');
+        return redirect()->route('tipoDoc')->with('creacionCorrecta', 'Tipo de documento creado correctamente');
     }
     /**
      * Edita un tipo de documento

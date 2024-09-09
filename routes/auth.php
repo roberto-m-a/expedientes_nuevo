@@ -66,7 +66,7 @@ Route::middleware('auth')->group(function () {
 
     Route::put('passwordF', [PasswordController::class, 'firstPassword'])->name('password.first');
     //TIPO DOCUMENTO
-    Route::put('tipoDoc',[tipoDocumentoController::class, 'nuevoTipoDoc'])->name('tipoDoc.nuevo');
+    Route::post('tipoDoc',[tipoDocumentoController::class, 'nuevoTipoDoc'])->name('tipoDoc.nuevo');
 
     Route::put('tipoDoc/editar',[tipoDocumentoController::class, 'editarTipoDoc'])->name('tipoDoc.editar');
 

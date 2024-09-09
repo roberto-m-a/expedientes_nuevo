@@ -13,4 +13,13 @@ class GradoAcademico extends Model
     protected $fillable = [
         'nombreGradoAcademico',
     ];
+    /**
+     * Los atributos que se deben ocultar para la serialización.
+     *
+     * @var array< date, date>
+     */
+    protected $hidden = [
+        'updated_at',
+        'created_at',
+    ];
 }

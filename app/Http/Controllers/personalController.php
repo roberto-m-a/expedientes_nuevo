@@ -19,7 +19,14 @@ use Inertia\Inertia;
 
 class personalController extends Controller
 {
-    //
+    /**
+     * Vista de personal del sistema
+     * 
+     * Renderiza la vista con los datos del personal para el usuario de tipo administrador,
+     * de no ser un usuario de este tipo se redireccionará al dashboard
+     * 
+     * @return Inertia\Inertia Renderiza la vista de personal
+     */
     public function index()
     {
         $user = User::find(Auth::user()->id);

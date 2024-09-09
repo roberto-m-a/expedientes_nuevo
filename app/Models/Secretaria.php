@@ -15,6 +15,15 @@ class Secretaria extends Model
         'IdPersonal',
     ];
     /**
+     * Los atributos que se deben ocultar para la serialización.
+     *
+     * @var array< date, date>
+     */
+    protected $hidden = [
+        'updated_at',
+        'created_at',
+    ];
+    /**
      * Obten el personal asociado a la secretaria
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasOne

@@ -23,6 +23,15 @@ class Personal extends Model
         'Sexo',
     ];
     /**
+     * Los atributos que se deben ocultar para la serialización.
+     *
+     * @var array< date, date>
+     */
+    protected $hidden = [
+        'updated_at',
+        'created_at',
+    ];
+    /**
      * Variable que valida la agregación de un nuevo personal al sistema mediante la vista del registro
      */
     public static $validarPersonalRegistro =[

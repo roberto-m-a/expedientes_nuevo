@@ -18,6 +18,15 @@ class expediente extends Model
         'IdDocente',
     ];
     /**
+     * Los atributos que se deben ocultar para la serialización.
+     *
+     * @var array< date, date>
+     */
+    protected $hidden = [
+        'updated_at',
+        'created_at',
+    ];
+    /**
      * Obten el docente asociado a un expediente
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasOne

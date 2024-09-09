@@ -14,7 +14,12 @@ use Inertia\Inertia;
 class periodoEscolarController extends Controller
 {
     /**
+     * Renderiza la vista de periodos escolares
      * 
+     * Permite al usuario autenticado retornar los datos de los periodos escolares siempre y cuando no
+     * sea un usaurio de tipo Docente
+     * 
+     * @return Inertia\Inertia Retorna la renderización de la vista de periodos con los datos ingresados
      */
     public function index()
     {
@@ -26,11 +31,12 @@ class periodoEscolarController extends Controller
         $periodosEscolares = PeriodoEscolar::with('documento')
             ->withCount('documento as numDocumentos')
             ->get();
+        $data=['user' => $user, 'personal' => $personal, 'periodosEscolares' => $periodosEscolares];
         if (Secretaria::where('IdPersonal', Auth::user()->IdPersonal)->first() !== null) {
-            return Inertia::render('Dashboard_secre_PeriodoEscolar', ['user' => $user, 'personal' => $personal, 'periodosEscolares' => $periodosEscolares]);
+            return Inertia::render('Dashboard_secre_PeriodoEscolar', $data);
         }
         if (Administrador::where('IdPersonal', Auth::user()->IdPersonal)->first() !== null) {
-            return Inertia::render('Dashboard_admin_PeriodoEscolar', ['user' => $user, 'personal' => $personal, 'periodosEscolares' => $periodosEscolares]);
+            return Inertia::render('Dashboard_admin_PeriodoEscolar', $data);
         }
     }
     /**

@@ -31,7 +31,32 @@ const form = useForm({
 });
 
 const nuevoTipoDoc = () => {
-    form.put(route('tipoDoc.nuevo'), {
+    const formDataJson = JSON.stringify(form); // Convertimos a JSON
+
+    $.ajax({
+        url: route('tipoDoc.nuevo'),
+        method: 'POST',
+        contentType: 'application/json', 
+        data: formDataJson, 
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') 
+        },
+        success: function (response) {
+            abrirModal.value = false;
+            form.reset(); // Reseteamos el formulario
+            console.log('Formulario enviado exitosamente');
+            //sessionStorage.setItem($page.props.flash.creacionCorrecta, response.flash);
+            //window.location.href = response.redirect;
+        },
+        error: function (xhr) {
+            if (xhr.status === 422) { 
+                form.errors = xhr.responseJSON.errors || {}; 
+                console.log(errors);
+            }
+            console.log(form.errors);
+        }
+    });
+    /* form.put(route('tipoDoc.nuevo'), {
         preserveScroll: true,
         onSuccess: () => {
             abrirModal.value = false;
@@ -40,7 +65,7 @@ const nuevoTipoDoc = () => {
         onError: () => {
             console.log(form.errors);
         },
-    });
+    }); */
 };
 </script>
 
@@ -58,6 +83,9 @@ const nuevoTipoDoc = () => {
                     <InputLabel for="tipoDoc" value="Nombre del tipo de documento" class="pt-2" />
                     <TextInput id="tipoDoc" type="text" class="mt-1 block w-full" v-model="form.nombreTipoDoc" autofocus
                         required />
+                    <!-- <span v-if="form.errors.nombreTipoDoc" class="text-red-500">
+                        {{ form.errors.nombreTipoDoc[0] }}
+                    </span> -->
                     <InputError class="mt-2" :message="form.errors.nombreTipoDoc" />
                     <div class="flex justify-between items-center pt-4">
                         <p class="text-red-500 font-semibold">

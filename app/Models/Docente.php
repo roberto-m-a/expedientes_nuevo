@@ -17,6 +17,15 @@ class Docente extends Model
         'IdPersonal',
     ];
     /**
+     * Los atributos que se deben ocultar para la serialización.
+     *
+     * @var array< date, date>
+     */
+    protected $hidden = [
+        'updated_at',
+        'created_at',
+    ];
+    /**
      * Variable que valida la agregacón o edición de un docente
      */
     public static $validarDocente = [

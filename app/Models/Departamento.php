@@ -15,6 +15,15 @@ class Departamento extends Model
         'nombreDepartamento'
     ];
     /**
+     * Los atributos que se deben ocultar para la serialización.
+     *
+     * @var array< date, date>
+     */
+    protected $hidden = [
+        'updated_at',
+        'created_at',
+    ];
+    /**
      * Variable que valida la agregación o edición de un nuevo departamento
      */
     public static $departamentoValidacion = [

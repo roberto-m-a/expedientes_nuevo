@@ -2,155 +2,142 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Administrador;
 use App\Models\Departamento;
-use App\Models\Docente;
 use App\Models\document;
 use App\Models\expediente;
 use App\Models\modificacion;
 use App\Models\PeriodoEscolar;
-use App\Models\Personal;
-use App\Models\Secretaria;
 use App\Models\TipoDocumento;
 use App\Models\User;
 use DateTime;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\ValidationException;
 
 class documentController extends Controller
 {
-    //
+    /**
+     * Renderiza la vista de subir documento
+     * 
+     * El método obtiene todos los datos necesarios para la subida de archivos, luego los manda
+     * a la vista dependiendo de que tipo de usuario es, el docente solo obtiene su propio
+     * expediente, mientras que los otros dos usuarios obtienen los expedientes de todos los
+     * docentes
+     * 
+     * @return Inertia\Inertia Retorna la vista con Inertia junto a las variables de los registros
+     */
     public function index()
     {
         $user = User::find(Auth::user()->id);
-        $personal = Personal::where('IdPersonal', Auth::user()->IdPersonal)->first();
+        $personal = $user->personal;
         $departamentos = Departamento::all();
-        $periodosEscolares = PeriodoEscolar::all();
         $tiposDocumentos = TipoDocumento::all();
-        $periodosEscolaresM = $periodosEscolares->map(function ($periodo) {
+        $periodosEscolares = PeriodoEscolar::all()->map(function ($periodo) {
             $periodo->generalInfo = $periodo->nombre_corto . ' (' . $periodo->fechaInicio . '-' . $periodo->fechaTermino . ')';
-            return $periodo;
+            return $periodo->only(['IdPeriodoEscolar', 'generalInfo']);
         });
-        if (Docente::where('IdPersonal', Auth::user()->IdPersonal)->first() !== null) {
-            $docente = Docente::where('IdPersonal', Auth::user()->IdPersonal)->first();
-            $expediente = expediente::where('IdDocente', $docente->IdDocente)->first();
-            return Inertia::render('Dashboard_subirDocumento', ['user' => $user, 'personal' => $personal, 'departamentos' => $departamentos, 'periodosEscolares' => $periodosEscolaresM, 'expediente' => $expediente, 'tiposDocumentos' => $tiposDocumentos]);
+        if ($personal->docente !== null) {
+            $expediente = $personal->docente->expediente->only('IdExpediente');
+            return Inertia::render('Dashboard_subirDocumento', ['user' => $user, 'personal' => $personal, 'departamentos' => $departamentos, 'periodosEscolares' => $periodosEscolares, 'expediente' => $expediente, 'tiposDocumentos' => $tiposDocumentos]);
         } else {
-            $expediente_data = DB::table('expediente')
-                ->join('docente', 'docente.IdDocente', '=', 'expediente.IdDocente')
+            $expediente_data = expediente::join('docente', 'docente.IdDocente', '=', 'expediente.IdDocente')
                 ->join('personal', 'personal.IdPersonal', '=', 'docente.IdPersonal')
                 ->join('departamento', 'departamento.IdDepartamento', '=', 'personal.IdDepartamento')
-                ->select('personal.*', 'expediente.IdExpediente', 'departamento.nombreDepartamento')
-                ->get();
-
-            $expediente_dataM = $expediente_data->map(function ($expediente) {
-                $expediente->generalInfo = $expediente->Nombre . ' ' . $expediente->Apellidos . ' - ' . $expediente->nombreDepartamento;
-                return $expediente;
-            });
-            //dd($expediente_data);
-            //dd($expediente_dataM);
-            if (Secretaria::where('IdPersonal', Auth::user()->IdPersonal)->first() !== null) {
-                return Inertia::render('Dashboard_secre_nuevoDocumento', ['user' => $user, 'personal' => $personal, 'departamentos' => $departamentos, 'expediente_data' => $expediente_dataM, 'periodosEscolares' => $periodosEscolaresM, 'tiposDocumentos' => $tiposDocumentos]);
+                ->select('personal.Nombre', 'personal.apellidos', 'expediente.IdExpediente', 'departamento.nombreDepartamento')
+                ->get()->map(function ($expediente) {
+                    $expediente->generalInfo = $expediente->Nombre . ' ' . $expediente->Apellidos . ' - ' . $expediente->nombreDepartamento;
+                    return $expediente->only(['IdExpediente', 'generalInfo']);
+                });
+            if ($personal->secretaria !== null) {
+                return Inertia::render('Dashboard_secre_nuevoDocumento', ['user' => $user, 'personal' => $personal, 'departamentos' => $departamentos, 'expediente_data' => $expediente_data, 'periodosEscolares' => $periodosEscolares, 'tiposDocumentos' => $tiposDocumentos]);
             }
-            if (Administrador::where('IdPersonal', $personal->IdPersonal)->first() !== null) {
-                return Inertia::render('Dashboard_admin_nuevoDocumento', ['user' => $user, 'personal' => $personal, 'departamentos' => $departamentos, 'expediente_data' => $expediente_dataM, 'periodosEscolares' => $periodosEscolaresM, 'tiposDocumentos' => $tiposDocumentos]);
+            if ($personal->administrador !== null) {
+                return Inertia::render('Dashboard_admin_nuevoDocumento', ['user' => $user, 'personal' => $personal, 'departamentos' => $departamentos, 'expediente_data' => $expediente_data, 'periodosEscolares' => $periodosEscolares, 'tiposDocumentos' => $tiposDocumentos]);
             }
         }
     }
-
+    /**
+     * Renderiza la vista de documentos
+     * 
+     * El método permite obtener la vista de todos los documentos en el sistema, asimismo tambien
+     * se obtienen todos los datos necesarios a traves del ORM. Después renderiza la vista dependiendo
+     * del tipo de usuario a traves de Inertia con los datos recabados
+     * 
+     * @return Inertia\Inertia Renderiza la vista ingresada y los datos necesarios para ser manejados en la vista
+     */
     public function documentsIndex()
     {
         $user = User::find(Auth::user()->id);
-        $personal = Personal::where('IdPersonal', Auth::user()->IdPersonal)->first();
-        if (Docente::where('IdPersonal', $personal->IdPersonal)->first() != null)
+        $personal = $user->personal;
+        if ($personal->docente != null)
             return Redirect::route('dashboard');
-        $tipo_documentos = TipoDocumento::all();
         $departamentos = Departamento::all();
-        $periodos_escolares = PeriodoEscolar::all();
-        $periodosEscolaresM = $periodos_escolares->map(function ($periodo) {
+        $tipo_documentos = TipoDocumento::all();
+        $periodos_escolares = PeriodoEscolar::all()->map(function ($periodo) {
             $periodo->generalInfo = $periodo->nombre_corto . ' (' . $periodo->fechaInicio . '-' . $periodo->fechaTermino . ')';
-            return $periodo;
+            return $periodo->only(['IdPeriodoEscolar', 'generalInfo']);
         });
-        $expediente_data = DB::table('expediente')
-            ->join('docente', 'docente.IdDocente', '=', 'expediente.IdDocente')
+        $expediente_data = expediente::join('docente', 'docente.IdDocente', '=', 'expediente.IdDocente')
             ->join('personal', 'personal.IdPersonal', '=', 'docente.IdPersonal')
             ->join('departamento', 'departamento.IdDepartamento', '=', 'personal.IdDepartamento')
             ->select('personal.*', 'expediente.IdExpediente', 'departamento.nombreDepartamento')
-            ->get();
-
-        $expediente_dataM = $expediente_data->map(function ($expediente) {
-            $expediente->generalInfo = $expediente->Nombre . ' ' . $expediente->Apellidos . ' - ' . $expediente->nombreDepartamento;
-            return $expediente;
-        });
-        $documentos = DB::table('documento')
-            ->join('tipo_documento', 'tipo_documento.IdTipoDocumento', '=', 'documento.IdTipoDocumento')
+            ->get()->map(function ($expediente) {
+                $expediente->generalInfo = $expediente->Nombre . ' ' . $expediente->Apellidos . ' - ' . $expediente->nombreDepartamento;
+                return $expediente->only(['IdExpediente', 'generalInfo']);
+            });
+        $documentos = document::join('tipo_documento', 'tipo_documento.IdTipoDocumento', '=', 'documento.IdTipoDocumento')
             ->join('periodo_escolar', 'periodo_escolar.IdPeriodoEscolar', '=', 'documento.IdPeriodoEscolar')
             ->join('expediente', 'expediente.IdExpediente', '=', 'documento.IdExpediente')
             ->join('docente', 'docente.IdDocente', '=', 'expediente.IdDocente')
             ->join('personal', 'personal.IdPersonal', '=', 'docente.IdPersonal')
             ->leftJoin('departamento', 'departamento.IdDepartamento', '=', 'documento.IdDepartamento')
             ->select('documento.*', 'tipo_documento.nombreTipoDoc', 'periodo_escolar.nombre_corto', 'departamento.nombreDepartamento', 'personal.Nombre', 'personal.Apellidos')
-            ->get();
-        if (Secretaria::where('IdPersonal', $personal->IdPersonal)->first() !== null) {
-            return Inertia::render('Dashboard_secre_documentos', ['user' => $user, 'personal' => $personal, 'documentos' => $documentos, 'tipo_documentos' => $tipo_documentos, 'departamentos' => $departamentos, 'periodos_escolares' => $periodosEscolaresM, 'expedientes' => $expediente_dataM]);
+            ->get()->map(function($documento) use ($personal, $user){
+                if($documento->fechaEntrega == null)
+                        $documento->entrega = true;
+                    else
+                        $documento->entrega = false;
+                if($personal->administrador != null){
+                    $documento->edita = true;
+                }else if($personal->secretaria != null){
+                    if($documento->user->personal->docente !=null || $documento->IdUsuario == $user->id)
+                        $documento->edita = true;
+                    else{
+                        $documento->edita = false;
+                    }
+                }
+               return $documento;
+            });
+        if ($personal->secretaria !== null) {
+            return Inertia::render('Dashboard_secre_documentos', ['user' => $user, 'personal' => $personal, 'documentos' => $documentos, 'tipo_documentos' => $tipo_documentos, 'departamentos' => $departamentos, 'periodos_escolares' => $periodos_escolares, 'expedientes' => $expediente_data]);
         }
-        if (Administrador::where('IdPersonal', $personal->IdPersonal)->first() !== null) {
-            return Inertia::render('Dashboard_admin_documentos', ['user' => $user, 'personal' => $personal, 'documentos' => $documentos, 'tipo_documentos' => $tipo_documentos, 'departamentos' => $departamentos, 'periodos_escolares' => $periodosEscolaresM, 'expedientes' => $expediente_dataM]);
+        if ($personal->administrador !== null) {
+            return Inertia::render('Dashboard_admin_documentos', ['user' => $user, 'personal' => $personal, 'documentos' => $documentos, 'tipo_documentos' => $tipo_documentos, 'departamentos' => $departamentos, 'periodos_escolares' => $periodos_escolares, 'expedientes' => $expediente_data]);
         }
-        //dd(Secretaria::where('IdPersonal',$personal->IdPersonal));
-
     }
-
+    /**
+     * Crear un nuevo documento
+     * 
+     * Este método valida primero los campos del documento en la petición para luego renombrar el archivo
+     * con datos de la fecha de subida. Una vez hecho lo anterior de guarda el archivo en el almacenamiento
+     * si se ha guardado correctamente se procede a crear el documento con los datos de los campos ingresados
+     * y despues actualiza la cantidad de documentos del expediente al que se ingresará el documento
+     * 
+     * @param Illuminate\Http\Request Peticion HTTP que contiene los campos del documento a agregar
+     * 
+     * @return Illuminate\Support\Facades\Redirect Redirecciona a la vista de subida de documento con un mensáje de éxito
+     */
     public function nuevoDocumento(Request $request)
     {
-        $request->validate([
-            'Expediente' => 'required',
-            'TipoDocumento' => 'required',
-            'Titulo' => 'required',
-            'FechaExpedicion' => 'required',
-            'Region' => 'required',
-            'PeriodoEscolar' => 'required',
-            'Archivo' => 'required|file|max:5120',
-        ]);
-        if (strpos($request->Archivo->getClientOriginalName(), '.pdf') == false) {
-            throw ValidationException::withMessages([
-                'Archivo' => 'Debes de ingresar un archivo PDF',
-            ]);
-        }
-        if ($request->Region == 'Interno') {
-            $request->validate([
-                'Departamento' => 'required',
-                'Estatus' => 'required',
-            ]);
-        } else {
-            $request->validate([
-                'Dependencia' => 'required',
-            ]);
-        }
-        if ($request->Estatus == 'Entregado') {
-            $request->validate([
-                'FechaEntrega' => 'required',
-            ]);
-            if ($request->FechaExpedicion > $request->FechaEntrega) {
-                throw ValidationException::withMessages([
-                    'FechaExpedicion' => 'Las fecha de expedición no puede ser despues de la fecha de entrega',
-                    'FechaEntrega' => 'Las fecha de entrega no puede ser antes de la fecha de expedición',
-                ]);
-            }
-        }
-
+        document::validarDocumento($request, true);
         $fecha = new DateTime(); // Obtener la fecha actual como objeto DateTime
         $archivo = $request->Archivo;
         $nombreArchivo = date_format($fecha, 'Y-m-d_H_i_s') . '_' . $archivo->getClientOriginalName();
         $path = Storage::putFileAs('public/documents', $archivo, $nombreArchivo);
         if (Storage::exists($path)) {
-            $document = document::create([
+            document::create([
                 'Titulo' => $request->Titulo,
                 'fechaExpedicion' => $request->FechaExpedicion,
                 'fechaEntrega' => ($request->Estatus == 'Entregado') ? $request->FechaEntrega : null,
@@ -164,21 +151,27 @@ class documentController extends Controller
                 'URL' => asset('storage/documents/' . $nombreArchivo),
                 'Dependencia' => ($request->Region == 'Interno') ? '' : $request->Dependencia,
             ]);
-            event(new Registered($document));
-            $expediente = expediente::where('IdExpediente', $request->Expediente['IdExpediente'])->first();
-            $expediente->numDocumentos = $expediente->numDocumentos + 1;
-            $expediente->save();
+            $expediente = expediente::find($request->Expediente['IdExpediente']);
+            $expediente->update(['numDocumentos' => $expediente->numDocumentos + 1]);
         }
         return Redirect::route('nuevoDocumento')->with('creacionCorrecta', 'Se ha registrado el documento con éxito.');
     }
-
+    /**
+     * Editar Documento
+     * 
+     * Edita la información del documento asi como la de reemplazar el archivo ligado a este por uno nuevo
+     * El archivo anterior será borrado permanentemente. También registra los cambios en la tabla modificacion
+     * de la base de datos, con todos los cambios detectados
+     * 
+     * @param Illuminate\Http\Request Peticion HTTP que contiene los campos del documento a editar
+     * 
+     * @return Illuminate\Support\Facades\Redirect Redirecciona a la vista de subida de documento con un mensáje de éxito 
+     */
     public function editarDocumento(Request $request)
     {
-        $documento = document::where('IdDocumento', $request->IdDocumento)->first();
-        //dd($documento);
-        $expediente = expediente::where('IdExpediente', $documento->IdExpediente)->first();
-        // Clonar el documento original
-        $documentoOriginal = clone $documento;
+        $documento = document::find($request->IdDocumento);
+        $expediente = $documento->expediente;
+        $documentoOriginal = clone $documento; // Clonar el documento original
         $cambioExpediente = '';
         if ($request->Archivo != '') {
             $nombreArchivo = explode('documents/', $documento->URL);
@@ -194,15 +187,16 @@ class documentController extends Controller
             }
         }
         if ($expediente->IdExpediente != $request->Expediente['IdExpediente']) {
-            $expediente->numDocumentos = $expediente->numDocumentos - 1;
-            $expediente->save();
-            $nuevoExpediente = expediente::where('IdExpediente', $request->Expediente['IdExpediente'])->first();
-            $nuevoExpediente->numDocumentos = $nuevoExpediente->numDocumentos + 1;
-            $nuevoExpediente->save();
-            $cambioExpediente = $cambioExpediente.' ,Expediente: '.
-            $expediente->docente->personal->Nombre.' '.$expediente->docente->personal->Apellidos.' => '.
-            $nuevoExpediente->docente->personal->Nombre.' '.$nuevoExpediente->docente->personal->Apellidos
-            ;
+            $expediente->update([
+                'numDocumentos' => $expediente->numDocumentos - 1,
+            ]);
+            $nuevoExpediente = expediente::find($request->Expediente['IdExpediente']);
+            $nuevoExpediente->update([
+                'numDocumentos' => $nuevoExpediente->numDocumentos + 1,
+            ]);
+            $cambioExpediente = $cambioExpediente . ' ,Expediente: ' .
+                $expediente->docente->personal->Nombre . ' ' . $expediente->docente->personal->Apellidos . ' => ' .
+                $nuevoExpediente->docente->personal->Nombre . ' ' . $nuevoExpediente->docente->personal->Apellidos;
         }
         $documento->Titulo = $request->Titulo;
         $documento->FechaExpedicion = $request->FechaExpedicion;
@@ -224,88 +218,70 @@ class documentController extends Controller
                 $cambios[$key] = ['original' => $value, 'nuevo' => $documento->$key];
             }
         }
-
-        //dd($cambios); // Aquí se muestran los cambios detectados
-        $arrayAsString = $this->arrayToString($cambios).$cambioExpediente;
-
+        // Aquí se muestran los cambios detectados
+        $arrayAsString = $this->arrayToString($cambios) . $cambioExpediente;
         $user = User::find(Auth::user()->id);
-
-        $modificacion = modificacion::create([
+        modificacion::create([
             'Nombre' => $user->personal->Nombre,
             'Apellidos' => $user->personal->Apellidos,
             'Titulo' => $request->Titulo,
-            'Modificaciones' =>$arrayAsString,
+            'Modificaciones' => $arrayAsString,
             'IdDocumento' => $documento->IdDocumento,
             'IdUsuario' => $user->id,
         ]);
+        return back()->with('actualizacionCorrecta', 'Se ha editado el documento correctamente');
     }
-    function arrayToString($array) {
+    /**
+     * método que permite transformar un arreglo bidimensional en una cadena de caracteres para el
+     * registro de la modificación
+     */
+    function arrayToString($array)
+    {
         $result = [];
         foreach ($array as $key => $value) {
             if (is_array($value)) {
-                $value = implode('=> ', $value); // Convertir el array interno a string
+                $value = implode('=> ', $value);
             }
             $result[] = "$key: $value";
         }
         return implode(', ', $result);
     }
-    
+    /**
+     * Llama al método estático para validar el documento y se pone un false para decir que el documento no
+     * es necesariamente requerido ya que este método es específicamente para validar antes de editar el
+     * documento
+     * 
+     * @param Illuminate\Http\Request Peticion HTTP que contiene los campos del documento
+     */
     public function validarDocumento(Request  $request)
     {
-        $request->validate([
-            'Expediente' => 'required',
-            'TipoDocumento' => 'required',
-            'Titulo' => 'required',
-            'FechaExpedicion' => 'required',
-            'Region' => 'required',
-            'PeriodoEscolar' => 'required',
-        ]);
-        if ($request->Archivo != '') {
-            if (strpos($request->Archivo->getClientOriginalName(), '.pdf') == false) {
-                throw ValidationException::withMessages([
-                    'Archivo' => 'Debes de ingresar un archivo PDF',
-                ]);
-            }
-        }
-        if ($request->Region == 'Interno') {
-            $request->validate([
-                'Departamento' => 'required',
-                'Estatus' => 'required',
-            ]);
-        } else {
-            $request->validate([
-                'Dependencia' => 'required',
-            ]);
-        }
-        if ($request->Estatus == 'Entregado') {
-            $request->validate([
-                'FechaEntrega' => 'required',
-            ]);
-            if ($request->FechaExpedicion > $request->FechaEntrega) {
-                throw ValidationException::withMessages([
-                    'FechaExpedicion' => 'Las fecha de expedición no puede ser despues de la fecha de entrega',
-                    'FechaEntrega' => 'Las fecha de entrega no puede ser antes de la fecha de expedición',
-                ]);
-            }
-        }
+        document::validarDocumento($request, false);
     }
-
+    /**
+     * Entrega de documento
+     * 
+     * El método busca el documento al cual se le hará la modificación de entrega para despues 
+     * checar si hay un archivo en la variable Archivo de la petición, si es el caso entonces 
+     * borra el anterior documento y guarda el nuevo documento para despues asignar al registro
+     * del documento la nueva URL para acceder al nuevo documento. Tambien actualiza la fecha de
+     * entrega y el estatus del documento
+     * 
+     * @param Illuminate\Http\Request Peticion HTTP que contiene los campos del documento
+     * 
+     * @return Illuminate\Support\Facades\Redirect Redirecciona a la vista de subida de documento con un mensáje de éxito
+     */
     public function entregarDocumento(Request $request)
     {
-        $documento = document::where('IdDocumento', $request->IdDocumento)->first();
+        $documento = document::find($request->IdDocumento);
         if ($request->Archivo != '') {
             $nombreArchivo = explode('documents/', $documento->URL);
-
             if (Storage::exists('public/documents/' . $nombreArchivo[1])) {
                 Storage::delete('public/documents/' . $nombreArchivo[1]);
             }
-
             $fecha = new DateTime(); // Obtener la fecha actual como objeto DateTime
             $archivo = $request->Archivo;
             $nombreArchivo = date_format($fecha, 'Y-m-d_H_i_s') . '_' . $archivo->getClientOriginalName();
-            //dd($nombreArchivo);
             $path = Storage::putFileAs('public/documents', $archivo, $nombreArchivo);
-            //$path2 = Storage::url($nombreArchivo);
             if (Storage::exists($path)) {
                 $documento->URL = asset('storage/documents/' . $nombreArchivo);
             }
@@ -313,24 +289,13 @@ class documentController extends Controller
         $documento->FechaEntrega = $request->FechaEntrega;
         $documento->Estatus = 'Entregado';
         $documento->save();
+        return back()->with('creacionCorrecta', 'Se ha entregado el documento correctamente');
     }
-
+    /**
+     * Llama al método estático en el modelo para validar la entrega de un documento
+     */
     public function validarEntrega(Request $request)
     {
-        $request->validate([
-            'FechaEntrega' => 'required',
-        ]);
-        if ($request->FechaExpedicion > $request->FechaEntrega) {
-            throw ValidationException::withMessages([
-                'FechaEntrega' => 'Las fecha de entrega no puede ser antes de la fecha de expedición',
-            ]);
-        }
-        if ($request->Archivo != '') {
-            if (strpos($request->Archivo->getClientOriginalName(), '.pdf') == false) {
-                throw ValidationException::withMessages([
-                    'Archivo' => 'Debes de ingresar un archivo PDF',
-                ]);
-            }
-        }
+        document::ValidarEntregaDocumento($request);
     }
 }
