@@ -169,13 +169,55 @@ class ProfileTest extends TestCase
             'email' => 'juana.perez@oaxaca.tecnm.mx',
         ]);
 
-        $response->assertRedirect(route('profile.edit'));
+        $response->assertStatus(200);
 
         $this->assertDatabaseHas('users', ['email' => 'juana.perez@oaxaca.tecnm.mx']);
         $this->assertDatabaseHas('personal', ['Nombre' => 'Juana', 'Apellidos' => 'Perez', 'Sexo' => 'Mujer']);
     }
+    //pruebas de error
+    public function test_actualizacion_de_datos_de_perfil_con_error_por_no_colocar_nombre()
+    {
+        $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+        $this->withoutExceptionHandling(); 
+        $departamento = Departamento::create([
+            'nombreDepartamento' => 'Sistemas',
+        ]);
+        $departamento2 = Departamento::create([
+            'nombreDepartamento' => 'Civil',
+        ]);
+        $departamento3 = Departamento::create([
+            'nombreDepartamento' => 'Quimica',
+        ]);
+        $personal = Personal::create([
+            'Nombre' => 'Roberto',
+            'Apellidos' => 'Manuel',
+            'IdDepartamento' => $departamento->IdDepartamento,
+            'Sexo' => 'Hombre',
+        ]);
+        $user = User::create([
+            'email' => 'test@itoaxaca.edu.mx',
+            'password' => bcrypt('password'),
+            'IdPersonal' => $personal->IdPersonal,
+        ]);
+        $docente = Docente::create([
+            'IdPersonal' => $personal->IdPersonal,
+            'GradoAcademico' => 'Licenciatura',
+        ]);
 
-    public function test_actualizacion_de_datos_de_perfil_con_error_por_correo_incorrrecto()
+        Auth::login($user);
+
+        $this->expectExceptionMessage('El campo nombre es obligatorio.');
+        $this->expectException(ValidationException::class);
+
+        $this->patch(route('profile.update'), [
+            'name' => '',
+            'lastname' => 'Cruz',
+            'Departamento' => ['IdDepartamento' => $departamento3->IdDepartamento],
+            'Sexo' => 'Hombre',
+            'email' => 'taddeocr7@oaxaca.tecnm.mx',
+        ]);
+    }
+    public function test_actualizacion_de_datos_de_perfil_con_error_por_correo_incorrecto()
     {
         $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
         $this->withoutExceptionHandling(); 
@@ -215,6 +257,60 @@ class ProfileTest extends TestCase
             'Departamento' => ['IdDepartamento' => $departamento3->IdDepartamento],
             'Sexo' => 'Hombre',
             'email' => 'taddeocr7@gmail.com',
+        ]);
+    }
+    public function test_actualizacion_de_datos_de_perfil_con_error_por_correo_ocupado_por_otro_usuario()
+    {
+        $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+        $this->withoutExceptionHandling(); 
+        $departamento = Departamento::create([
+            'nombreDepartamento' => 'Sistemas',
+        ]);
+        $departamento2 = Departamento::create([
+            'nombreDepartamento' => 'Civil',
+        ]);
+        $departamento3 = Departamento::create([
+            'nombreDepartamento' => 'Quimica',
+        ]);
+        $personald = Personal::create([
+            'Nombre' => 'Roberto',
+            'Apellidos' => 'Manuel',
+            'IdDepartamento' => $departamento->IdDepartamento,
+            'Sexo' => 'Hombre',
+        ]);
+        $userd = User::create([
+            'email' => 'taddeocr7@oaxaca.tecnm.mx',
+            'password' => bcrypt('password'),
+            'IdPersonal' => $personald->IdPersonal,
+        ]);
+
+        $personal = Personal::create([
+            'Nombre' => 'Roberto',
+            'Apellidos' => 'Manuel',
+            'IdDepartamento' => $departamento->IdDepartamento,
+            'Sexo' => 'Hombre',
+        ]);
+        $user = User::create([
+            'email' => 'test@itoaxaca.edu.mx',
+            'password' => bcrypt('password'),
+            'IdPersonal' => $personal->IdPersonal,
+        ]);
+        $docente = Docente::create([
+            'IdPersonal' => $personal->IdPersonal,
+            'GradoAcademico' => 'Licenciatura',
+        ]);
+
+        Auth::login($user);
+
+        $this->expectExceptionMessage('El campo correo electrónico ya ha sido registrado.');
+        $this->expectException(ValidationException::class);
+
+        $this->patch(route('profile.update'), [
+            'name' => 'Tadeo',
+            'lastname' => 'Cruz',
+            'Departamento' => ['IdDepartamento' => $departamento3->IdDepartamento],
+            'Sexo' => 'Hombre',
+            'email' => 'taddeocr7@oaxaca.tecnm.mx',
         ]);
     }
 }

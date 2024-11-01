@@ -6,6 +6,7 @@ use App\Http\Controllers\expedienteController;
 use App\Models\Administrador;
 use App\Models\Departamento;
 use App\Models\Docente;
+use App\Models\document;
 use App\Models\expediente;
 use App\Models\PeriodoEscolar;
 use App\Models\Personal;
@@ -22,7 +23,8 @@ use Inertia\Response as InertiaResponse;
 class ExpedienteTest extends TestCase
 {
     use RefreshDatabase;
-    public function test_expediente_tiene_relacion_con_un_docente(){
+    public function test_expediente_tiene_relacion_con_un_docente()
+    {
         $departamento = Departamento::create([
             'IdDepartamento' => 1234,
             'nombreDepartamento' => 'Sistemas',
@@ -85,7 +87,8 @@ class ExpedienteTest extends TestCase
         $this->assertEquals(url('/dashboard'), $response->getTargetUrl());
     }
 
-    public function test_renderiza_la_vista_de_expedientes_secretaria(){
+    public function test_renderiza_la_vista_de_expedientes_secretaria()
+    {
         $departamento = Departamento::create([
             'IdDepartamento' => 1234,
             'nombreDepartamento' => 'Sistemas',
@@ -120,7 +123,7 @@ class ExpedienteTest extends TestCase
             'password' => bcrypt('password'),
             'IdPersonal' => $personalSecretaria->IdPersonal,
         ]);
-        Auth::login($user);//logueamos al usuario de la secretaria
+        Auth::login($user); //logueamos al usuario de la secretaria
         // Crear una instancia del controlador
         $controller = new expedienteController();
 
@@ -136,7 +139,8 @@ class ExpedienteTest extends TestCase
         $this->assertStringContainsString('Dashboard_secre_expedientes', $responseContent);
     }
 
-    public function test_renderiza_la_vista_de_expedientes_admin(){
+    public function test_renderiza_la_vista_de_expedientes_admin()
+    {
         $departamento = Departamento::create([
             'IdDepartamento' => 1234,
             'nombreDepartamento' => 'Sistemas',
@@ -171,7 +175,7 @@ class ExpedienteTest extends TestCase
             'password' => bcrypt('password'),
             'IdPersonal' => $personalSecretaria->IdPersonal,
         ]);
-        Auth::login($user);//logueamos al usuario de la secretaria
+        Auth::login($user); //logueamos al usuario de la secretaria
         // Crear una instancia del controlador
         $controller = new expedienteController();
 
@@ -187,24 +191,16 @@ class ExpedienteTest extends TestCase
         $this->assertStringContainsString('Dashboard_admin_expedientes', $responseContent);
     }
 
-    public function test_renderiza_la_vista_del_expediente_del_docente(){
-        // Crear tipos de documentos
-        $tipo_documentos = [
-            ['IdTipoDocumento' => 1, 'nombreTipoDoc' => 'Tipo A'],
-            ['IdTipoDocumento' => 2, 'nombreTipoDoc' => 'Tipo B'],
-            ['IdTipoDocumento' => 3, 'nombreTipoDoc' => 'Tipo C'],
-        ];
+    public function test_renderiza_la_vista_del_expediente_del_docente()
+    {
+        $tipo_documento = TipoDocumento::create([ 'nombreTipoDoc' => 'Tipo A']);
 
-        foreach ($tipo_documentos as $tipo_documento) {
-            TipoDocumento::create($tipo_documento);
-        }
         $periodoEscolar = PeriodoEscolar::create([
             'fechaInicio' => '2024-01-01',
             'fechaTermino' =>  '2024-06-06',
             'nombre_corto' => 'ENE-JUN 2024',
         ]);
         $departamento = Departamento::create([
-            'IdDepartamento' => 1234,
             'nombreDepartamento' => 'Sistemas',
         ]);
         //Agregamos un docente con su expediente
@@ -212,7 +208,7 @@ class ExpedienteTest extends TestCase
             'Nombre' => 'Virginia',
             'Apellidos' => 'Ortiz',
             'IdDepartamento' => $departamento->IdDepartamento,
-            'Sexo' => 'Hombre',
+            'Sexo' => 'Mujer',
         ]);
         $docente1 = Docente::create([
             'IdPersonal' => $personalDoc1->IdPersonal,
@@ -221,14 +217,55 @@ class ExpedienteTest extends TestCase
         $expediente1 = expediente::create([
             'IdDocente' => $docente1->IdDocente,
         ]);
-        
+
         $user = User::create([
-            'id' => 7777,
             'email' => 'test@itoaxaca.edu.mx',
             'password' => bcrypt('password'),
             'IdPersonal' => $personalDoc1->IdPersonal,
         ]);
-        Auth::login($user);//logueamos al usuario de la secretaria
+        $personalSecre = Personal::create([
+            'Nombre' => 'Soledar',
+            'Apellidos' => 'Pérez',
+            'IdDepartamento' => $departamento->IdDepartamento,
+            'Sexo' => 'Mujer',
+        ]);
+        $userSecre = User::create([
+            'email' => 'test.secre@itoaxaca.edu.mx',
+            'password' => bcrypt('password'),
+            'IdPersonal' => $personalSecre->IdPersonal,
+        ]);
+        $Secre = Secretaria::create([
+            'IdPersonal' => $personalSecre->IdPersonal,
+        ]);
+
+        document::create([
+            'Titulo' => 'Document Title 1',
+            'fechaExpedicion' => '2024-08-06',
+            'fechaEntrega' => '2024-08-07',
+            'Estatus' => 'Entregado',
+            'region' => 'Externo',
+            'IdTipoDocumento' => $tipo_documento->IdTipoDocumento,
+            'IdPeriodoEscolar' => $periodoEscolar->IdPeriodoEscolar,
+            'IdExpediente' => $expediente1->IdExpediente,
+            'IdDepartamento' => null,
+            'IdUsuario' => $user->id,
+            'URL' => 'http://example.com',
+            'Dependencia' => 'Dependencia 1',
+        ]);
+        document::create([
+            'Titulo' => 'Document Title',
+            'fechaExpedicion' => '2024-08-06',
+            'Estatus' => 'En proceso',
+            'region' => 'Interno',
+            'IdTipoDocumento' => $tipo_documento->IdTipoDocumento,
+            'IdPeriodoEscolar' => $periodoEscolar->IdPeriodoEscolar,
+            'IdExpediente' => $expediente1->IdExpediente,
+            'IdDepartamento' => $departamento->IdDepartamento,
+            'IdUsuario' => $userSecre->id,
+            'URL' => 'http://example.com',
+            'Dependencia' => '',
+        ]);
+        Auth::login($user); //logueamos al usuario docente
         // Crear una instancia del controlador
         $controller = new expedienteController();
 
@@ -244,7 +281,8 @@ class ExpedienteTest extends TestCase
         $this->assertStringContainsString('Dashboard_miExpediente', $responseContent);
     }
 
-    public function test_Renderiza_expediente_especifico_correctamente_admin(){
+    public function test_Renderiza_expediente_especifico_correctamente_admin()
+    {
         DB::table('tipo_documento')->insert([
             ['IdTipoDocumento' => 1, 'nombreTipoDoc' => 'Tipo 1'],
             ['IdTipoDocumento' => 2, 'nombreTipoDoc' => 'Tipo 2'],
@@ -262,7 +300,7 @@ class ExpedienteTest extends TestCase
             'IdPersonal' => 1
         ]);
         DB::table('administrador')->insert(
-            ['IdAdministrador'=> 100,'IdPersonal' =>1],
+            ['IdAdministrador' => 100, 'IdPersonal' => 1],
         );
         DB::table('docente')->insert([
             ['IdDocente' => 2, 'IdPersonal' => 2, 'GradoAcademico' => 'Licenciatura'],
@@ -288,7 +326,7 @@ class ExpedienteTest extends TestCase
                 'fechaEntrega' => '2024-08-07',
                 'Estatus' => 'Entregado',
                 'region' => 'Externo',
-                'IdTipoDocumento' =>1 ,
+                'IdTipoDocumento' => 1,
                 'IdPeriodoEscolar' => 1,
                 'IdExpediente' => 2,
                 'IdDepartamento' => null,
@@ -299,7 +337,7 @@ class ExpedienteTest extends TestCase
             [
                 'Titulo' => 'Document Title',
                 'fechaExpedicion' => '2024-08-06',
-                'fechaEntrega' => '2024-08-07',
+                'fechaEntrega' => null,
                 'Estatus' => 'En proceso',
                 'region' => 'Interno',
                 'IdTipoDocumento' => 1,
@@ -329,7 +367,8 @@ class ExpedienteTest extends TestCase
         $this->assertStringContainsString('Dashboard_admin_expedienteEspecifico', $responseContent);
     }
 
-    public function test_Renderiza_expediente_especifico_correctamente_secretaria(){
+    public function test_Renderiza_expediente_especifico_correctamente_secretaria()
+    {
         DB::table('tipo_documento')->insert([
             ['IdTipoDocumento' => 1, 'nombreTipoDoc' => 'Tipo 1'],
             ['IdTipoDocumento' => 2, 'nombreTipoDoc' => 'Tipo 2'],
@@ -338,16 +377,25 @@ class ExpedienteTest extends TestCase
         DB::table('personal')->insert([
             ['IdPersonal' => 1, 'Nombre' => 'Usuario Prueba 1', 'Apellidos' => 'Apellidos 1', 'Sexo' => 'Hombre'],
             ['IdPersonal' => 2, 'Nombre' => 'Usuario Prueba 2', 'Apellidos' => 'Apellidos 2', 'Sexo' => 'Mujer'],
+            ['IdPersonal' => 3, 'Nombre' => 'Usuario Prueba 3', 'Apellidos' => 'Apellidos 3', 'Sexo' => 'Mujer'],
         ]);
 
-        DB::table('users')->insert([
+        DB::table('users')->insert([[
             'id' => 1,
             'email' => 'prueba@example.com',
             'password' => bcrypt('password'),
             'IdPersonal' => 1
-        ]);
+        ], [
+            'id' => 2,
+            'email' => 'prueba.admin@example.com',
+            'password' => bcrypt('password'),
+            'IdPersonal' => 3
+        ]]);
+        DB::table('administrador')->insert(
+            ['IdAdministrador' => 100, 'IdPersonal' => 3],
+        );
         DB::table('secretaria')->insert(
-            ['IdSecretaria'=> 100,'IdPersonal' =>1],
+            ['IdSecretaria' => 100, 'IdPersonal' => 1],
         );
         DB::table('docente')->insert([
             ['IdDocente' => 2, 'IdPersonal' => 2, 'GradoAcademico' => 'Licenciatura'],
@@ -368,12 +416,12 @@ class ExpedienteTest extends TestCase
 
         DB::table('documento')->insert([
             [
-                'Titulo' => 'Document Title',
+                'Titulo' => 'Document Title 1',
                 'fechaExpedicion' => '2024-08-06',
                 'fechaEntrega' => '2024-08-07',
                 'Estatus' => 'Entregado',
                 'region' => 'Externo',
-                'IdTipoDocumento' =>1 ,
+                'IdTipoDocumento' => 1,
                 'IdPeriodoEscolar' => 1,
                 'IdExpediente' => 2,
                 'IdDepartamento' => null,
@@ -382,7 +430,7 @@ class ExpedienteTest extends TestCase
                 'Dependencia' => 'Dependencia 1',
             ],
             [
-                'Titulo' => 'Document Title',
+                'Titulo' => 'Document Title 2',
                 'fechaExpedicion' => '2024-08-06',
                 'fechaEntrega' => '2024-08-07',
                 'Estatus' => 'En proceso',
@@ -392,6 +440,20 @@ class ExpedienteTest extends TestCase
                 'IdExpediente' => 2,
                 'IdDepartamento' => 1,
                 'IdUsuario' => 1,
+                'URL' => 'http://example.com',
+                'Dependencia' => '',
+            ],
+            [
+                'Titulo' => 'Document Title 3',
+                'fechaExpedicion' => '2024-08-06',
+                'fechaEntrega' => '2024-08-07',
+                'Estatus' => 'Entregado',
+                'region' => 'Interno',
+                'IdTipoDocumento' => 1,
+                'IdPeriodoEscolar' => 1,
+                'IdExpediente' => 2,
+                'IdDepartamento' => 1,
+                'IdUsuario' => 2,
                 'URL' => 'http://example.com',
                 'Dependencia' => '',
             ]

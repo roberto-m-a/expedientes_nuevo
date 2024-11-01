@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Http\Request;
 
 class Docente extends Model
 {   
@@ -29,8 +30,14 @@ class Docente extends Model
      * Variable que valida la agregacón o edición de un docente
      */
     public static $validarDocente = [
-        'GradoAcademico' => 'required',
+        'GradoAcademico' => 'required|not_in:undefined',
     ];
+    /**
+     * Funcion estatica para validar la creacion de un docente
+     */
+    public static function validarDocente(Request $request){
+        $request->validate(['GradoAcademico' => 'required|not_in:undefined'], ['GradoAcademico.not_in' => 'Seleccione un grado académico']);
+    }
     /**
      * Obten el personal asociado a un docente
      *

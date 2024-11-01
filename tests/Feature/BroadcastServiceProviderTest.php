@@ -2,10 +2,10 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Providers\BroadcastServiceProvider;
+use Mockery;
+use Tests\TestCase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Broadcast;
 
 class BroadcastServiceProviderTest extends TestCase
@@ -23,6 +23,20 @@ class BroadcastServiceProviderTest extends TestCase
         require $channelsPath;
 
         // Verificar que el archivo se haya incluido correctamente
+        $this->assertTrue(true);
+    }
+    /** @test */
+    public function test_arranca_las_rutas_de_broadcast_y_requiere_el_archivo_de_canales()
+    {
+        // Verificar que el archivo 'channels.php' exista
+        $basePath = base_path('routes/channels.php');
+        $this->assertFileExists($basePath);
+
+        // Crear una instancia del ServiceProvider y llamar al método boot
+        $provider = new BroadcastServiceProvider($this->app);
+        $provider->boot();
+
+        // Verificar que se haya ejecutado el código del método sin excepciones
         $this->assertTrue(true);
     }
 }

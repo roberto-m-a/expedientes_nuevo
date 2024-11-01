@@ -14,9 +14,52 @@ const form = useForm({
     password: '',
     password_confirmation: '',
 });
-
+const flashMessage = ref('');
+const disableButtonForm = ref(false);
 const updatePassword = () => {
-    form.put(route('password.update'), {
+    form.clearErrors();
+    const formDataJson = JSON.stringify(form);
+    $.ajax({
+        url: route('password.update'),
+        method: 'PUT',
+        contentType: 'application/json',
+        data: formDataJson,
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        beforeSend: function(){
+            disableButtonForm.value = true
+        },
+        success: function (response) {
+            form.reset();
+            flashMessage.value = 'Contraseña actualizada'
+            setTimeout(() => {
+                flashMessage.value = '';
+            }, 3000);
+            disableButtonForm.value = false;
+        },
+        error: function (xhr) {
+            console.log(xhr.responseJSON);
+            if (xhr.status === 422) {
+                let errors = xhr.responseJSON.errors;
+                $.each(errors, function (field, messages) {
+                    form.setError({
+                        [field]: messages[0] || {}
+                    });
+                });
+            }
+            if (form.errors.password) {
+                form.reset('password', 'password_confirmation');
+                passwordInput.value.focus();
+            }
+            if (form.errors.current_password) {
+                form.reset('current_password');
+                currentPasswordInput.value.focus();
+            }
+            disableButtonForm.value = false;
+        }
+    });
+    /* form.put(route('password.update'), {
         preserveScroll: true,
         onSuccess: () => form.reset(),
         onError: () => {
@@ -29,7 +72,7 @@ const updatePassword = () => {
                 currentPasswordInput.value.focus();
             }
         },
-    });
+    }); */
 };
 </script>
 
@@ -95,7 +138,8 @@ const updatePassword = () => {
             </div>
 
             <div class="flex items-center gap-4">
-                <PrimaryButton :disabled="form.processing">Guardar</PrimaryButton>
+                <PrimaryButton :class="{ 'opacity-25': disableButtonForm }"
+                :disabled="disableButtonForm">Guardar</PrimaryButton>
 
                 <Transition
                     enter-active-class="transition ease-in-out"
@@ -103,7 +147,7 @@ const updatePassword = () => {
                     leave-active-class="transition ease-in-out"
                     leave-to-class="opacity-0"
                 >
-                    <p v-if="form.recentlySuccessful" class="text-sm text-gray-600">Guardado.</p>
+                    <p v-if="flashMessage" class="text-sm text-gray-600">{{ flashMessage }}</p>
                 </Transition>
             </div>
         </form>

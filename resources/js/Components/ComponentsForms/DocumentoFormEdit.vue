@@ -8,6 +8,7 @@ import Modal from '@/Components/Modal.vue';
 import DangerButton from '@/Components/DangerButton.vue';
 import InputError from '@/Components/InputError.vue';
 import vSelect from 'vue-select';
+import FlashMessageEdit from '../ComponentsFlashMessages/FlashMessageEdit.vue';
 const props = defineProps({
     abrirModal: {
         type: Boolean,
@@ -27,6 +28,9 @@ const props = defineProps({
     expedientes: {
         type: Array,
     },
+    expediente: {
+        type: Object,
+    }
 });
 const emit = defineEmits(['update:abrirModal', 'update:documento']);
 const abrirEdit = ref(props.abrirModal);
@@ -48,10 +52,10 @@ watch(() => props.documento, (newVal) => {
     formEdit.Departamento = props.departamentos.find(a => a.IdDepartamento === documento.value?.IdDepartamento);
     formEdit.TipoDocumento = props.tipo_documentos.find(a => a.IdTipoDocumento === documento.value?.IdTipoDocumento);
     formEdit.PeriodoEscolar = props.periodos_escolares.find(a => a.IdPeriodoEscolar === documento.value?.IdPeriodoEscolar);
-    formEdit.Expediente = props.expedientes.find(a => a.IdExpediente === documento.value?.IdExpediente);
+    formEdit.Expediente = props.expediente ? props.expediente : props.expedientes?.find(a => a.IdExpediente === documento.value?.IdExpediente);
     formEdit.Dependencia = documento.value?.dependencia;
-    
     formEdit.URL = documento.value?.URL;
+    console.log(formEdit);
 });
 watch(documento, (newVal) => {
     emit('update:documento', newVal);
@@ -68,75 +72,118 @@ const formEdit = useForm({
     Departamento: '',
     TipoDocumento: '',
     PeriodoEscolar: '',
-    Expediente: '',
+    Expediente: props.expediente,
     Archivo: '',
     Dependencia: documento.value?.dependencia,
     Region: documento.value?.region,
     Estatus: documento.value?.Estatus,
     URL: documento.value?.URL,
+    path: '',
 })
-
+const flashMessage = ref('');
+const disableButtonForm = ref(false);
 const editarDocumento = () => {
-    formEdit.post(route('validar.documento'), {
-        onSuccess: () => {
-            console.log('validado correctamente')
-            const randomCode = Math.floor(1000 + Math.random() * 9000); // Genera un código aleatorio de 4 dígitos
-            Swal.fire({
-                title: 'Confirmación necesaria',
-                text: `Esta por editar el documento ${formEdit.Titulo}. Para continuar, ingresa el código de confirmación: ${randomCode}`,
-                input: 'number',
-                inputAttributes: {
-                    maxlength: 4,
-                    autocapitalize: 'off',
-                    autocorrect: 'off'
-                },
-                showCancelButton: true,
-                confirmButtonText: 'Confirmar',
-                cancelButtonText: 'Cancelar',
-                preConfirm: (inputValue) => {
-                    return new Promise((resolve) => {
-                        if (inputValue === randomCode.toString()) {
-                            resolve(true);
-                        } else {
-                            Swal.showValidationMessage('Código incorrecto');
-                            resolve(false);
-                        }
-                    });
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire('Edición confirmada', 'El código es correcto.Espere a recargar la página', 'success');
-                    formEdit.post(route('documento.editar'), {
-                        preserveScroll: true,
-                        onSuccess: () => {
-                            abrirEdit.value = false;
-                            formEdit.reset();
-                            document.getElementById('Archivo').value = null;
-                            document.querySelector('#vistaPrevia').setAttribute('src', '');
-                            location.reload();
-                        },
-                        onError: () => {
-                            console.log(formEdit.errors);
-                        },
-                    });
-                } else if (result.dismiss === Swal.DismissReason.cancel) {
-                    abrirEdit.value = false;
-                    formEdit.reset();
-                    Swal.fire('Acción cancelada', 'No se realizó ninguna acción.', 'error');
+    formEdit.clearErrors();
+    const randomCode = Math.floor(1000 + Math.random() * 9000); // Genera un código aleatorio de 4 dígitos
+    Swal.fire({
+        title: 'Confirmación necesaria',
+        text: `Esta por editar el documento ${formEdit.Titulo}. Para continuar, ingresa el código de confirmación: ${randomCode}`,
+        input: 'number',
+        inputAttributes: {
+            maxlength: 4,
+            autocapitalize: 'off',
+            autocorrect: 'off'
+        },
+        showCancelButton: true,
+        confirmButtonText: 'Confirmar',
+        cancelButtonText: 'Cancelar',
+        preConfirm: (inputValue) => {
+            return new Promise((resolve) => {
+                if (inputValue === randomCode.toString()) {
+                    resolve(true);
+                } else {
+                    Swal.showValidationMessage('Código incorrecto');
+                    resolve(false);
                 }
             });
-        },
-        onError: () => {
-            console.log(formEdit.errors)
         }
-    })
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const formData = new FormData();
+            formData.append('IdDocumento', formEdit.IdDocumento);
+            formData.append('Titulo', formEdit.Titulo);
+            formData.append('FechaExpedicion', formEdit.FechaExpedicion);
+            formData.append('FechaEntrega', formEdit.FechaEntrega);
+            formData.append('Departamento', formEdit.Departamento?.IdDepartamento);
+            formData.append('TipoDocumento', formEdit.TipoDocumento?.IdTipoDocumento);
+            formData.append('PeriodoEscolar', formEdit.PeriodoEscolar?.IdPeriodoEscolar);
+            formData.append('Expediente', formEdit.Expediente?.IdExpediente);
+            formData.append('Dependencia', formEdit.Dependencia);
+            formData.append('Region', formEdit.Region);
+            formData.append('Estatus', formEdit.Estatus);
+            formData.append('Archivo', formEdit.Archivo);
+            formData.append('URL', formEdit.URL);
+            $.ajax({
+                url: route('documento.editar'),
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                beforeSend: function () {
+                    disableButtonForm.value = true;
+                },
+                success: function (response) {
+                    formEdit.reset();
+                    limpiar();
+                    abrirEdit.value = false;
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                    flashMessage.value = 'Documento editado correctamente';
+                    window.location.reload();
+                },
+                error: function (xhr) {
+                    console.log(xhr);
+                    if (xhr.status === 422) {
+                        let errors = xhr.responseJSON.errors;
+                        $.each(errors, function (field, messages) {
+                            formEdit.setError({
+                                [field]: messages[0] || {}
+                            });
+                        });
+                    }
+                    disableButtonForm.value = false;
+                }
+            });
+            /* formEdit.post(route('documento.editar'), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    abrirEdit.value = false;
+                    formEdit.reset();
+                    document.getElementById('Archivo').value = null;
+                    document.querySelector('#vistaPrevia').setAttribute('src', '');
+                    location.reload();
+                },
+                onError: () => {
+                    console.log(formEdit.errors);
+                },
+            }); */
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+            abrirEdit.value = false;
+            formEdit.reset();
+            Swal.fire('Acción cancelada', 'No se realizó ninguna acción.', 'error');
+        }
+    });
 }
 //Metodo para validar el archivo que se introduce en el input
 const documentoT = async (e) => {
     if (!(e.target instanceof HTMLInputElement)) {
         return Promise.reject(new Error("no es HTMLInputElement"));
     }
-    console.log('xd');
     if (e.target.files[0] == null) {
         document.getElementById('Archivo').value = null;
         document.querySelector('#vistaPrevia').setAttribute('src', '');
@@ -144,7 +191,6 @@ const documentoT = async (e) => {
         pesoMax.value = false;
     }
     const file = e.target.files[0];
-    console.log(file);
     if (file.size > 5000000) {
         document.getElementById('Archivo').value = null;
         document.querySelector('#vistaPrevia').setAttribute('src', '');
@@ -154,11 +200,9 @@ const documentoT = async (e) => {
     else {
         formEdit.Archivo = file;
         pesoMax.value = false;
-
         let pdffFile = document.getElementById('Archivo').files[0];
         let pdffFileURL = URL.createObjectURL(pdffFile) + "#toolbar=0";
         document.querySelector('#vistaPrevia').setAttribute('src', pdffFileURL);
-        console.log(formEdit);
     }
 };
 //Metodo para limpiar el input del archivo
@@ -170,6 +214,7 @@ const limpiar = () => {
 }
 </script>
 <template>
+    <FlashMessageEdit :flashMessage="flashMessage"></FlashMessageEdit>
     <Modal :show="abrirEdit">
         <div class="p-8 flex flex-col space-y-4">
             <div class="flex flex-row-reverse items-end justify-between overflow-hidden">
@@ -177,13 +222,15 @@ const limpiar = () => {
             </div>
 
             <form @submit.prevent="editarDocumento" class="flex-row" enctype="multipart/form-data">
-
-                <InputLabel for="Expediente" value="Seleccione el expediente al que desea agregar el documento"
-                    class="pt-2" />
-                <v-select type="text" id="Expediente" label="generalInfo"
-                    placeholder="Introduce el nombre del docente al que quieras añadir el documento"
-                    :options="expedientes" :filterable="true" v-model="formEdit.Expediente" class="border-white" />
-                <InputError class="mt-2" :message="formEdit.errors.Expediente" />
+                <div v-if="expedientes">
+                    <InputLabel for="Expediente" value="Seleccione el expediente al que desea agregar el documento"
+                        class="pt-2" />
+                    <v-select type="text" id="Expediente" label="generalInfo"
+                        placeholder="Introduce el nombre del docente al que quieras añadir el documento"
+                        :options="expedientes" :filterable="true" v-model="formEdit.Expediente" class="border-white"
+                        required />
+                    <InputError class="mt-2" :message="formEdit.errors.Expediente" />
+                </div>
 
                 <InputLabel for="tipoDocumento" value="Seleccione el tipo de documento" class="pt-2" />
                 <v-select type="text" id="tipoDocumento" label="nombreTipoDoc"
@@ -212,7 +259,7 @@ const limpiar = () => {
                     </div>
                     <div class="text-end block font-medium text-sm text-gray-700">Seleccionó: {{
                         formEdit.Region
-                    }}</div>
+                        }}</div>
                 </div>
                 <InputError class="mt-2" :message="formEdit.errors.Region" />
 
@@ -264,7 +311,7 @@ const limpiar = () => {
                     class="pt-2 text-l font-semibold text-center text-red-500" />
                 <div class="space-y-2">
                     <TextInput id="Archivo" type="file" class="mt-1 block w-full" accept="application/pdf"
-                        @change="documentoT" />
+                        @change="documentoT" v-model="formEdit.path" />
                     <div v-if="formEdit.Archivo != ''"
                         class="flex flex-auto align-middle justify-center space-x-4 pr-5">
                         <DangerButton @click="limpiar">Quitar archivo</DangerButton>
@@ -295,7 +342,8 @@ const limpiar = () => {
                             *Antes de guardar asegurese de corroborar su información.
                         </p>
                     </div>
-                    <PrimaryButton class="flex justify-center">Guardar archivo</PrimaryButton>
+                    <PrimaryButton class="flex justify-center" :class="{ 'opacity-25': disableButtonForm }"
+                        :disabled="disableButtonForm">Guardar archivo</PrimaryButton>
                 </div>
             </form>
         </div>

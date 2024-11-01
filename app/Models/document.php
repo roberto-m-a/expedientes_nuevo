@@ -46,16 +46,21 @@ class document extends Model
      * 
      * @throws Illuminate\Validation\ValidationException Arroja las excepciones con los errores detectados en las validaciones
      */
-    public static function validarDocumento(Request $request, $requiredDoc){
+    public static function validarDocumento(Request $request, $requiredDoc)
+    {
         $request->validate([
-            'Expediente' => 'required',
-            'TipoDocumento' => 'required',
+            'Expediente' => 'required|not_in:undefined',
+            'TipoDocumento' => 'required|not_in:undefined',
             'Titulo' => 'required|string|max:255',
             'FechaExpedicion' => 'required',
             'Region' => 'required|string|max:12',
-            'PeriodoEscolar' => 'required',
+            'PeriodoEscolar' => 'required|not_in:undefined',
+        ], [
+            'Expediente.not_in' => 'Selecciona un expediente',
+            'TipoDocumento.not_in' => 'Selecciona un tipo de documento',
+            'PeriodoEscolar.not_in' => 'Selecciona un período escolar',
         ]);
-        if($requiredDoc){
+        if ($requiredDoc) {
             $request->validate(['Archivo' => 'required|file|max:5120']);
         }
         if ($request->Archivo != '') {
@@ -67,8 +72,10 @@ class document extends Model
         }
         if ($request->Region == 'Interno') {
             $request->validate([
-                'Departamento' => 'required',
+                'Departamento' => 'required|not_in:undefined',
                 'Estatus' => 'required|',
+            ], [
+                'Departamento.not_in' => 'Selecciona un departamento',
             ]);
         } else {
             $request->validate([
@@ -96,7 +103,8 @@ class document extends Model
      * 
      * @throws Illuminate\Validation\ValidationException Arroja las excepciones con los errores detectados en las validaciones
      */
-    public static function ValidarEntregaDocumento(Request $request){
+    public static function ValidarEntregaDocumento(Request $request)
+    {
         $request->validate([
             'FechaEntrega' => 'required',
         ]);
@@ -129,7 +137,7 @@ class document extends Model
      */
     public function expediente(): HasOne
     {
-        return $this->hasOne(expediente::class,'IdExpediente','IdExpediente');
+        return $this->hasOne(expediente::class, 'IdExpediente', 'IdExpediente');
     }
     /**
      * Obten el periodo escolar asociado a un documento

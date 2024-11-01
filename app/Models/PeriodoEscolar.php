@@ -29,9 +29,9 @@ class PeriodoEscolar extends Model
      * Variable que valida la agregación o edición de un período escolar 
      */
     public static $validacionPeriodoEscolar = [
-        'fechaInicio' => 'required|string|max:50',
-        'fechaTermino' => 'required|string|after:fechaInicio|max:50',
-        'nombre_corto' => 'required|string|max:50|unique:' . PeriodoEscolar::class,
+        'fechaInicio' => 'required|string|max:20',
+        'fechaTermino' => 'required|string|after:fechaInicio|max:20',
+        'nombre_corto' => 'required|string|max:20|unique:' . PeriodoEscolar::class,
     ];
     /**
      * Obten todos los documentos de un periodo escolar

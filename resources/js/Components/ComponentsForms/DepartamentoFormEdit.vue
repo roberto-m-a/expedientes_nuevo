@@ -7,6 +7,7 @@ import TextInput from '@/Components/TextInput.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import InputError from '@/Components/InputError.vue';
 import { ref, watch } from 'vue';
+import FlashMessageEdit from '../ComponentsFlashMessages/FlashMessageEdit.vue';
 const props = defineProps({
     abrirModal: {
         type: Boolean
@@ -42,68 +43,93 @@ const formEdit = useForm({
     idDepartamento: departamento.value?.IdDepartamento,
     nombreDepartamento: departamento.value?.nombreDepartamento,
 });
+const flashMessage = ref('');
+const disableButtonForm = ref(false);
 const editarDepartamento = () => {
-    formEdit.post(route('validar.departamento'), {
-        preserveScroll: true,
-        onSuccess: () => {
-            let registrosDocs = departamento.value?.numDocumentos;
-            let registrosPers = departamento.value?.numPersonal;
-            const randomCode = Math.floor(1000 + Math.random() * 9000); // Genera un código aleatorio de 4 dígitos
-            Swal.fire({
-                title: 'Confirmación necesaria',
-                text: `Esta accion afectará a ${registrosDocs} documentos y a ${registrosPers} personales. Para continuar, ingresa el código de confirmación: ${randomCode}`,
-                input: 'number',
-                inputAttributes: {
-                    maxlength: 4,
-                    autocapitalize: 'off',
-                    autocorrect: 'off'
-                },
-                showCancelButton: true,
-                confirmButtonText: 'Confirmar',
-                cancelButtonText: 'Cancelar',
-                preConfirm: (inputValue) => {
-                    return new Promise((resolve) => {
-                        if (inputValue === randomCode.toString()) {
-                            resolve(true);
-                        } else {
-                            Swal.showValidationMessage('Código incorrecto');
-                            resolve(false);
-                        }
-                    });
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire('Edición confirmada', 'El código es correcto.', 'success');
-                    // Aquí puedes agregar la lógica para realizar la acción deseada después de la confirmación
-                    formEdit.put(route('departamento.editar'), {
-                        preserveScroll: true,
-                        onSuccess: () => {
-                            abrirEdit.value = false;
-                            formEdit.reset()
-                        },
-                        onError: () => {
-                            console.log(formEdit.errors);
-                        },
-                    });
-                } else if (result.dismiss === Swal.DismissReason.cancel) {
-                    abrirEdit.value = false;
-                    formEdit.reset();
-                    Swal.fire('Acción cancelada', 'No se realizó ninguna acción.', 'error');
+    formEdit.clearErrors();
+    let registrosDocs = departamento.value?.numDocumentos;
+    let registrosPers = departamento.value?.numPersonal;
+    const randomCode = Math.floor(1000 + Math.random() * 9000); // Genera un código aleatorio de 4 dígitos
+    Swal.fire({
+        title: 'Confirmación necesaria',
+        text: `Esta accion afectará a ${registrosDocs} documentos y a ${registrosPers} personales. Para continuar, ingresa el código de confirmación: ${randomCode}`,
+        input: 'number',
+        inputAttributes: {
+            maxlength: 4,
+            autocapitalize: 'off',
+            autocorrect: 'off'
+        },
+        showCancelButton: true,
+        confirmButtonText: 'Confirmar',
+        cancelButtonText: 'Cancelar',
+        preConfirm: (inputValue) => {
+            return new Promise((resolve) => {
+                if (inputValue === randomCode.toString()) {
+                    resolve(true);
+                } else {
+                    Swal.showValidationMessage('Código incorrecto');
+                    resolve(false);
                 }
             });
-        },
-        onError: () => {
-            console.log('no pasó')
-            console.log(formEdit.errors);
-        },
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const formDataJson = JSON.stringify(formEdit); // Convertimos a JSON
+            $.ajax({
+                url: route('departamento.editar'),
+                method: 'POST',
+                contentType: 'application/json',
+                data: formDataJson,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                beforeSend: function () {
+                    disableButtonForm.value = true;
+                },
+                success: function (response) {
+                    abrirEdit.value = false;
+                    formEdit.reset();
+                    flashMessage.value = 'Departamento editado correctamente';
+                    disableButtonForm.value = false;
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                    window.location.reload();
+                },
+                error: function (xhr) {
+                    if (xhr.status === 422) {
+                        formEdit.setError({
+                            nombreDepartamento: xhr.responseJSON.errors.nombreDepartamento[0] || {},
+                        });
+                    }
+                    disableButtonForm.value = false;
+                }
+            });
+            /* formEdit.put(route('departamento.editar'), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    abrirEdit.value = false;
+                    formEdit.reset()
+                },
+                onError: () => {
+                    console.log(formEdit.errors);
+                },
+            }); */
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+            abrirEdit.value = false;
+            formEdit.reset();
+            Swal.fire('Acción cancelada', 'No se realizó ninguna acción.', 'error');
+        }
     });
 };
 </script>
 <template>
-    <Modal :show='abrirEdit' >
+    <FlashMessageEdit :flashMessage="flashMessage"></FlashMessageEdit>
+    <Modal :show='abrirEdit'>
         <div class="p-8 flex flex-col space-y-4">
             <div class="flex flex-row-reverse items-end justify-between overflow-hidden">
-                <DangerButton @click="abrirEdit = false">X</DangerButton>
+                <DangerButton @click="abrirEdit = false; formEdit.reset(); formEdit.clearErrors()">X</DangerButton>
             </div>
             <div>
                 <p>
@@ -118,7 +144,8 @@ const editarDepartamento = () => {
                         <p class="text-red-500 font-semibold">
                             *Corrobore su información antes de guardarla
                         </p>
-                        <PrimaryButton>Guardar</PrimaryButton>
+                        <PrimaryButton :class="{ 'opacity-25': disableButtonForm }" :disabled="disableButtonForm">
+                            Guardar</PrimaryButton>
                     </div>
                 </form>
             </div>

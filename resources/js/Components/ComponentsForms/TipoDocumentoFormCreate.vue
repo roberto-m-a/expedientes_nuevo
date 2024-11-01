@@ -7,6 +7,7 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import InputError from '@/Components/InputError.vue';
 import { useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
+import FlashMessageCreate from '../ComponentsFlashMessages/FlashMessageCreate.vue';
 
 const props = defineProps({
     modelValue: {
@@ -29,31 +30,40 @@ watch(abrirModal, (newVal) => {
 const form = useForm({
     nombreTipoDoc: '',
 });
-
+const flashMessage = ref('');
+const disableButtonForm = ref(false);
 const nuevoTipoDoc = () => {
+    form.clearErrors();
     const formDataJson = JSON.stringify(form); // Convertimos a JSON
-
     $.ajax({
         url: route('tipoDoc.nuevo'),
         method: 'POST',
-        contentType: 'application/json', 
-        data: formDataJson, 
+        contentType: 'application/json',
+        data: formDataJson,
         headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') 
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        beforeSend: function () {
+            disableButtonForm.value = true;
         },
         success: function (response) {
             abrirModal.value = false;
-            form.reset(); // Reseteamos el formulario
-            console.log('Formulario enviado exitosamente');
-            //sessionStorage.setItem($page.props.flash.creacionCorrecta, response.flash);
-            //window.location.href = response.redirect;
+            form.reset();
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+            flashMessage.value = 'Tipo de documento creado correctamente';
+            disableButtonForm.value = false;
+            window.location.reload();
         },
         error: function (xhr) {
-            if (xhr.status === 422) { 
-                form.errors = xhr.responseJSON.errors || {}; 
-                console.log(errors);
+            if (xhr.status === 422) {
+                form.setError({
+                    nombreTipoDoc: xhr.responseJSON.errors.nombreTipoDoc[0] || {},
+                });
             }
-            console.log(form.errors);
+            disableButtonForm.value = false;
         }
     });
     /* form.put(route('tipoDoc.nuevo'), {
@@ -70,10 +80,11 @@ const nuevoTipoDoc = () => {
 </script>
 
 <template>
-    <Modal :show="abrirModal" @close="abrirModal = false">
+    <FlashMessageCreate :flashMessage="flashMessage"></FlashMessageCreate>
+    <Modal :show="abrirModal">
         <div class="p-8 flex flex-col space-y-4">
             <div class="flex flex-row-reverse items-end justify-between overflow-hidden">
-                <DangerButton @click="abrirModal = false; form.reset();">X</DangerButton>
+                <DangerButton @click="abrirModal = false; form.reset(); form.clearErrors();">X</DangerButton>
             </div>
             <div>
                 <p>
@@ -91,7 +102,8 @@ const nuevoTipoDoc = () => {
                         <p class="text-red-500 font-semibold">
                             *Corrobore su información antes de guardarla
                         </p>
-                        <PrimaryButton>Guardar</PrimaryButton>
+                        <PrimaryButton :class="{ 'opacity-25': disableButtonForm }" :disabled="disableButtonForm">
+                            Guardar</PrimaryButton>
                     </div>
                 </form>
             </div>

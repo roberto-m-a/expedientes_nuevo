@@ -9,12 +9,16 @@ import InputError from '@/Components/InputError.vue';
 import Checkbox from '@/Components/Checkbox.vue';
 import { ref, watch } from 'vue';
 import vSelect from 'vue-select';
+import FlashMessageCreate from '../ComponentsFlashMessages/FlashMessageCreate.vue';
 
 const props = defineProps({
     abrirModal: {
         type: Boolean,
     },
     departamentos: {
+        type: Array,
+    },
+    gradoAcademico: {
         type: Array,
     },
 });
@@ -40,9 +44,46 @@ const form = useForm({
     email: '',
     email_confirmation: '',
 });
-
+const flashMessage= ref('');
+const disableButtonForm = ref(false);
 const nuevoPersonal = () => {
-    form.put(route('personal.nuevo'), {
+    form.clearErrors();
+    const formDataJson = JSON.stringify(form); // Convertimos a JSON
+    $.ajax({
+        url: route('personal.nuevo'),
+        method: 'POST',
+        contentType: 'application/json',
+        data: formDataJson,
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        beforeSend: function () {
+            disableButtonForm.value = true;
+        },
+        success: function (response) {
+            abrir.value = false;
+            form.reset();;
+            flashMessage.value = 'Personal creado correctamente';
+            disableButtonForm.value = false;
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+            window.location.reload();
+        },
+        error: function (xhr) {
+            if (xhr.status === 422) {
+                let errors = xhr.responseJSON.errors;
+                $.each(errors, function (field, messages) {
+                    form.setError({
+                        [field]: messages[0] || {}
+                    });
+                });
+            }
+            disableButtonForm.value = false;
+        }
+    });
+    /* form.put(route('personal.nuevo'), {
         preserveScroll: true,
         onSuccess: () => {
             form.reset()
@@ -51,14 +92,15 @@ const nuevoPersonal = () => {
         onError: () => {
             console.log(form.errors);
         },
-    });
+    }); */
 };
 </script>
 <template>
+    <FlashMessageCreate :flashMessage="flashMessage"></FlashMessageCreate>
     <Modal :show='abrir'>
         <div class="p-8 flex flex-col space-y-4">
             <div class="flex flex-row-reverse items-end justify-between overflow-hidden">
-                <DangerButton @click="abrir = false; form.reset()">X</DangerButton>
+                <DangerButton @click="abrir = false; form.reset(); form.clearErrors()">X</DangerButton>
             </div>
             <div>
                 <p>
@@ -117,16 +159,11 @@ const nuevoPersonal = () => {
                     <InputError class="mt-2" :message="form.errors.Docente" />
                     <div v-if="form.tipoUsuario == 'Docente'">
                         <InputLabel for="" value="Grado académico del docente" />
-                        <select value="" id="GradoAcademico" v-model="form.GradoAcademico"
-                            class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-                            <option value="Licenciatura">Licenciatura</option>
-                            <option value="Posgrado">Posgrado</option>
-                            <option value="Mestria">Maestria</option>
-                            <option value="Doctorado">Doctorado</option>
-                            <option value="Otro">otro</option>
-                        </select>
+                        <v-select type="text" id="gradoAcademico" label="nombreGradoAcademico"
+                            placeholder="Selecciona el grado académico" :options="gradoAcademico"
+                            :filterable="true" v-model="form.GradoAcademico" class="border-white" />
+                            <InputError class="mt-2" :message="form.errors.GradoAcademico" />
                     </div>
-                    <InputError class="mt-2" :message="form.errors.GradoAcademico" />
                     <div class="flex flex-auto align-middle justify-evenly p-2 space-x-2">
                         <InputLabel for="crearUser"
                             value="Marque la casilla en caso de querer crear un usuario para este personal ->" />
@@ -152,7 +189,7 @@ const nuevoPersonal = () => {
                         <p class="text-red-500 font-semibold">
                             *Corrobore todos los datos antes de guardarlos
                         </p>
-                        <PrimaryButton>Guardar</PrimaryButton>
+                        <PrimaryButton :class="{ 'opacity-25': disableButtonForm }" :disabled="disableButtonForm">Guardar</PrimaryButton>
                     </div>
                 </form>
             </div>

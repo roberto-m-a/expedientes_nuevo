@@ -171,7 +171,7 @@ class PersonalTest extends TestCase
         $responseContent = $response->toResponse($request)->getContent();
         $this->assertStringContainsString('Dashboard_admin_personal', $responseContent);
     }
-
+    /////////////////Pruebas de la funcion de nuevo personal///////////////////
     public function test_Nuevo_Personal_docente_con_exito_sin_correo()
     {
         Event::fake();
@@ -184,9 +184,9 @@ class PersonalTest extends TestCase
             'Nombre' => 'Armando',
             'Apellidos' => 'Mendoza',
             'Sexo' => 'Hombre',
-            'Departamento' => $departamento->IdDepartamento,
+            'Departamento' => ['IdDepartamento' => $departamento->IdDepartamento],
             'tipoUsuario' => 'Docente',
-            'GradoAcademico' => 'Licenciatura',
+            'GradoAcademico' => ['nombreGradoAcademico' => 'Licenciatura'],
             'crearUsuario' => false,
             'email' => '',
             'email_confirmation' => '',
@@ -228,7 +228,7 @@ class PersonalTest extends TestCase
             'Nombre' => 'Armando',
             'Apellidos' => 'Mendoza',
             'Sexo' => 'Hombre',
-            'Departamento' => $departamento->IdDepartamento,
+            'Departamento' => ['IdDepartamento' => $departamento->IdDepartamento],
             'tipoUsuario' => 'Secretaria',
             'GradoAcademico' => '',
             'crearUsuario' => false,
@@ -265,7 +265,7 @@ class PersonalTest extends TestCase
             'Nombre' => 'Armando',
             'Apellidos' => 'Mendoza',
             'Sexo' => 'Hombre',
-            'Departamento' => $departamento->IdDepartamento,
+            'Departamento' => ['IdDepartamento' => $departamento->IdDepartamento],
             'tipoUsuario' => 'Administrador',
             'GradoAcademico' => '',
             'crearUsuario' => false,
@@ -304,7 +304,7 @@ class PersonalTest extends TestCase
             'Nombre' => 'Armando',
             'Apellidos' => 'Mendoza',
             'Sexo' => 'Hombre',
-            'Departamento' => $departamento->IdDepartamento,
+            'Departamento' => ['IdDepartamento' => $departamento->IdDepartamento],
             'tipoUsuario' => 'Administrador',
             'GradoAcademico' => '',
             'crearUsuario' => true,
@@ -338,7 +338,7 @@ class PersonalTest extends TestCase
 
         $this->assertFalse(Auth::check()); //Se comprueba que sea falso debido a que este personal con correo se crea desde el administrador por lo que no deberia de iniciar la sesion con el usuario creado
     }
-
+    //Pruebas de error
     public function test_Nuevo_personal_falla_por_no_colocar_nombre()
     {
         $this->expectExceptionMessage('El campo nombre es obligatorio');
@@ -392,7 +392,7 @@ class PersonalTest extends TestCase
     }
     public function test_Nuevo_personal_falla_por_correos_diferentes()
     {
-        $this->expectExceptionMessage('Los correos no coinciden');
+        $this->expectExceptionMessage('La confirmación de correo electrónico no coincide.');
         $this->expectException(ValidationException::class);
         $departamento = Departamento::create([
             'nombreDepartamento' => 'Sistemas',
@@ -403,7 +403,7 @@ class PersonalTest extends TestCase
             'Nombre' => 'Juan',
             'Apellidos' => 'Lopez',
             'Sexo' => 'Hombre',
-            'Departamento' => $departamento->IdDepartamento,
+            'Departamento' => ['IdDepartamento' => $departamento->IdDepartamento],
             'tipoUsuario' => 'Administrador',
             'GradoAcademico' => '',
             'crearUsuario' => true,
@@ -428,7 +428,7 @@ class PersonalTest extends TestCase
             'Nombre' => 'Juan',
             'Apellidos' => 'Lopez',
             'Sexo' => 'Hombre',
-            'Departamento' => $departamento->IdDepartamento,
+            'Departamento' => ['IdDepartamento' => $departamento->IdDepartamento],
             'tipoUsuario' => 'Administrador',
             'GradoAcademico' => '',
             'crearUsuario' => true,
@@ -440,6 +440,47 @@ class PersonalTest extends TestCase
 
         $controller->nuevoPersonal($request);
     }
+    public function test_Nuevo_personal_falla_por_correos_tomado_por_otro_usuario()
+    {
+        $departamento = Departamento::create([
+            'nombreDepartamento' => 'Sistemas',
+        ]);
+        $personal = Personal::create([
+            'Nombre' => 'Roberto',
+            'Apellidos' => 'Manuel',
+            'IdDepartamento' => $departamento->IdDepartamento,
+            'Sexo' => 'Hombre',
+        ]);
+        $docente = Docente::create([
+            'IdPersonal' => $personal->IdPersonal,
+            'GradoAcademico' => 'Licenciatura',
+        ]);
+        $user = User::create([
+            'email' => 'test@itoaxaca.edu.mx',
+            'password' => bcrypt('password'),
+            'IdPersonal' => $personal->IdPersonal,
+            'email_verified_at' => '2024-01-02'
+        ]);
+        $this->expectExceptionMessage('El campo correo electrónico ya ha sido registrado.');
+        $this->expectException(ValidationException::class);
+        // Crear una solicitud simulada
+        $request = Request::create('/personal', 'PUT', [
+            'Nombre' => 'Juan',
+            'Apellidos' => 'Lopez',
+            'Sexo' => 'Hombre',
+            'Departamento' => ['IdDepartamento' => $departamento->IdDepartamento],
+            'tipoUsuario' => 'Administrador',
+            'GradoAcademico' => '',
+            'crearUsuario' => true,
+            'email' => 'test@itoaxaca.edu.mx',
+            'email_confirmation' => 'test@itoaxaca.edu.mx',
+        ]);
+
+        $controller = new personalController();
+
+        $controller->nuevoPersonal($request);
+    }
+    /////////////////Pruebas de la funcion de editar personal//////////////////
     public function test_editar_personal_docente_correctamente()
     {
         Notification::fake();
@@ -473,7 +514,7 @@ class PersonalTest extends TestCase
             'Sexo' => 'Mujer',
             'Departamento' => ['IdDepartamento' => $departamentoNuevo->IdDepartamento],
             'Docente' => true,
-            'GradoAcademico' => 'Doctorado',
+            'GradoAcademico' => ['nombreGradoAcademico' => 'Doctorado'],
             'email' => $user->email,
             'email_confirmation' => $user->email,
         ]);
@@ -544,7 +585,121 @@ class PersonalTest extends TestCase
             'email_verified_at' => null,
         ]);
     }
+    /////////////Pruebas de la funcion de validar personal ///////////////////////
+    /**La funcion es usada por la funcion de editar personal, por lo que ya no es necesario realizar
+     * pruebas de error para la anterior función ya que son las siguientes
+     */
+    public function test_validar_personal_falla_por_no_colocar_nombre()
+    {
+        $departamentoNuevo = Departamento::create([
+            'nombreDepartamento' => 'Quimica',
+        ]);
+        $departamento = Departamento::create([
+            'nombreDepartamento' => 'Sistemas',
+        ]);
+        $personal = Personal::create([
+            'Nombre' => 'Roberto',
+            'Apellidos' => 'Manuel',
+            'IdDepartamento' => $departamento->IdDepartamento,
+            'Sexo' => 'Hombre',
+        ]);
+        $user = User::create([
+            'email' => 'test@itoaxaca.edu.mx',
+            'password' => bcrypt('password'),
+            'IdPersonal' => $personal->IdPersonal,
+            'email_verified_at' => '2024-01-02'
+        ]);
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('El campo nombre es obligatorio.');
+        $request = Request::create(route('personal.editar'), 'POST', [
+            'IdPersonal' => $personal->IdPersonal,
+            'Nombre' => '',
+            'Apellidos' => 'Lopez',
+            'Sexo' => 'Mujer',
+            'Departamento' => ['IdDepartamento' => $departamentoNuevo->IdDepartamento],
+            'Docente' => true,
+            'GradoAcademico' => 'Licenciatura',
+            'email' => 'nuevo.correo2@oaxaca.tecnm.mx',
+            'email_confirmation' => 'nuevo.correo2@oaxaca.tecnm.mx',
+        ]);
 
+        $controller = new personalController();
+        $controller->validarPersonal($request);
+    }
+    public function test_validar_personal_falla_por_no_colocar_apellidos()
+    {
+        $departamentoNuevo = Departamento::create([
+            'nombreDepartamento' => 'Quimica',
+        ]);
+        $departamento = Departamento::create([
+            'nombreDepartamento' => 'Sistemas',
+        ]);
+        $personal = Personal::create([
+            'Nombre' => 'Roberto',
+            'Apellidos' => 'Manuel',
+            'IdDepartamento' => $departamento->IdDepartamento,
+            'Sexo' => 'Hombre',
+        ]);
+        $user = User::create([
+            'email' => 'test@itoaxaca.edu.mx',
+            'password' => bcrypt('password'),
+            'IdPersonal' => $personal->IdPersonal,
+            'email_verified_at' => '2024-01-02'
+        ]);
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('El campo apellidos es obligatorio.');
+        $request = Request::create(route('personal.editar'), 'POST', [
+            'IdPersonal' => $personal->IdPersonal,
+            'Nombre' => 'Karla',
+            'Apellidos' => '',
+            'Sexo' => 'Mujer',
+            'Departamento' => ['IdDepartamento' => $departamentoNuevo->IdDepartamento],
+            'Docente' => true,
+            'GradoAcademico' => 'Licenciatura',
+            'email' => 'nuevo.correo2@oaxaca.tecnm.mx',
+            'email_confirmation' => 'nuevo.correo2@oaxaca.tecnm.mx',
+        ]);
+
+        $controller = new personalController();
+        $controller->validarPersonal($request);
+    }
+    public function test_validar_personal_falla_por_no_colocar_grado_academico()
+    {
+        $departamentoNuevo = Departamento::create([
+            'nombreDepartamento' => 'Quimica',
+        ]);
+        $departamento = Departamento::create([
+            'nombreDepartamento' => 'Sistemas',
+        ]);
+        $personal = Personal::create([
+            'Nombre' => 'Roberto',
+            'Apellidos' => 'Manuel',
+            'IdDepartamento' => $departamento->IdDepartamento,
+            'Sexo' => 'Hombre',
+        ]);
+        $user = User::create([
+            'email' => 'test@itoaxaca.edu.mx',
+            'password' => bcrypt('password'),
+            'IdPersonal' => $personal->IdPersonal,
+            'email_verified_at' => '2024-01-02'
+        ]);
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('El campo grado academico es obligatorio.');
+        $request = Request::create(route('personal.editar'), 'POST', [
+            'IdPersonal' => $personal->IdPersonal,
+            'Nombre' => 'Karla',
+            'Apellidos' => 'Guzman',
+            'Sexo' => 'Mujer',
+            'Departamento' => ['IdDepartamento' => $departamentoNuevo->IdDepartamento],
+            'Docente' => true,
+            'GradoAcademico' => '',
+            'email' => 'nuevo.correo2@oaxaca.tecnm.mx',
+            'email_confirmation' => 'nuevo.correo2@oaxaca.tecnm.mx',
+        ]);
+
+        $controller = new personalController();
+        $controller->validarPersonal($request);
+    }
     public function test_validar_personal_falla_por_correos_no_institucionales()
     {
         $departamentoNuevo = Departamento::create([
@@ -575,8 +730,8 @@ class PersonalTest extends TestCase
             'Departamento' => ['IdDepartamento' => $departamentoNuevo->IdDepartamento],
             'Docente' => true,
             'GradoAcademico' => 'Licenciatura',
-            'email' => 'nuevo.correo@gmail.com',
-            'email_confirmation' => 'nuevo.correo@gmail.com',
+            'email' => 'nuevo.correo2@gmail.com',
+            'email_confirmation' => 'nuevo.correo2@gmail.com',
         ]);
 
         $controller = new personalController();
@@ -603,7 +758,7 @@ class PersonalTest extends TestCase
             'email_verified_at' => '2024-01-02'
         ]);
         $this->expectException(ValidationException::class);
-        $this->expectExceptionMessage('Los correos no coinciden');
+        $this->expectExceptionMessage('La confirmación de correo electrónico no coincide.');
         $request = Request::create(route('personal.editar'), 'POST', [
             'IdPersonal' => $personal->IdPersonal,
             'Nombre' => 'Ruby',
@@ -618,7 +773,57 @@ class PersonalTest extends TestCase
         $controller = new personalController();
         $controller->validarPersonal($request);
     }
+    public function test_validar_personal_falla_por_correo_ocupado_por_otro_usuario()
+    {
+        $departamentoNuevo = Departamento::create([
+            'nombreDepartamento' => 'Quimica',
+        ]);
+        $departamento = Departamento::create([
+            'nombreDepartamento' => 'Sistemas',
+        ]);
+        $personal = Personal::create([
+            'Nombre' => 'Roberto',
+            'Apellidos' => 'Manuel',
+            'IdDepartamento' => $departamento->IdDepartamento,
+            'Sexo' => 'Hombre',
+        ]);
+        $user = User::create([
+            'email' => 'test@itoaxaca.edu.mx',
+            'password' => bcrypt('password'),
+            'IdPersonal' => $personal->IdPersonal,
+            'email_verified_at' => '2024-01-02'
+        ]);
+        //Crear otro usuario para lanzar la validación
+        $personal2 = Personal::create([
+            'Nombre' => 'Jahir',
+            'Apellidos' => 'Lopez',
+            'IdDepartamento' => $departamento->IdDepartamento,
+            'Sexo' => 'Hombre',
+        ]);
+        $user2 = User::create([
+            'email' => 'jahir.lopez@itoaxaca.edu.mx',
+            'password' => bcrypt('password'),
+            'IdPersonal' => $personal2->IdPersonal,
+            'email_verified_at' => '2024-01-02'
+        ]);
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('El campo correo electrónico ya ha sido tomado');
+        $request = Request::create(route('personal.editar'), 'POST', [
+            'IdPersonal' => $personal->IdPersonal,
+            'Nombre' => 'Ruby',
+            'Apellidos' => 'Lopez',
+            'Sexo' => 'Mujer',
+            'Departamento' => ['IdDepartamento' => $departamentoNuevo->IdDepartamento],
+            'Docente' => true,
+            'GradoAcademico' => 'Licenciatura',
+            'email' => 'jahir.lopez@itoaxaca.edu.mx',
+            'email_confirmation' => 'jahir.lopez@itoaxaca.edu.mx',
+        ]);
 
+        $controller = new personalController();
+        $controller->validarPersonal($request);
+    }
+    //////////////PRuebas de la funcion de borrar personal/////////
     public function test_eliminar_personal_administrador()
     {
         $departamento = Departamento::create([
@@ -668,7 +873,6 @@ class PersonalTest extends TestCase
             'Sexo' => 'Hombre',
         ]);
     }
-
     public function test_eliminar_personal_docente()
     {
         $departamento = Departamento::create([

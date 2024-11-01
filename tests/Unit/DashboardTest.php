@@ -201,7 +201,8 @@ class DashboardTest extends TestCase
         $this->assertStringContainsString('Cantidad de documentos por cada tipo de documento', $responseContent);
         $this->assertStringContainsString('Dashboard_admin', $responseContent);
     }
-
+    ///////////////////Pruebas filtrar documentos////////////////////////////
+    //Prueba del filtrado de información sobre los documentos
     public function testFiltrarConsultaSinRegistros()
     {
         $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
@@ -237,8 +238,7 @@ class DashboardTest extends TestCase
         ]);
 
         // Verificar la respuesta
-        $response->assertRedirect('/dashboard');
-        $response->assertSessionHas('sinRegistros', 'Al parecer no hay registros con los parámetros ingresados');
+        $response->assertStatus(404); //Verifica que no hay registros con el error 404
     }
 
     public function testFiltrarConsultaConRegistros_administrador()

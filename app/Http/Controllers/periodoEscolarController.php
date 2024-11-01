@@ -58,7 +58,7 @@ class periodoEscolarController extends Controller
             'fechaTermino' => $request->fechaTermino,
             'nombre_corto' => $request->nombre_corto,
         ]);
-        return Redirect::route('periodoEscolar')->with('creacionCorrecta', 'Período escolar creado correctamente');
+        //return Redirect::route('periodoEscolar')->with('creacionCorrecta', 'Período escolar creado correctamente');
     }
     /**
      * Edita un período escolar
@@ -73,12 +73,13 @@ class periodoEscolarController extends Controller
      */
     public function editarPeriodoEscolar(Request $request)
     {
+        $this->validarPeriodoEscolar($request);
         PeriodoEscolar::find($request->IdPeriodoEscolar)->update([
                 'fechaInicio' => $request->fechaInicio,
                 'fechaTermino' => $request->fechaTermino,
                 'nombre_corto' => $request->nombre_corto,
         ]);
-        return Redirect::route('periodoEscolar')->with('actualizacionCorrecta', 'Período escolar actualizado correctamente');
+        //return Redirect::route('periodoEscolar')->with('actualizacionCorrecta', 'Período escolar actualizado correctamente');
     }
     /**
      * Valida un período escolar
@@ -105,8 +106,7 @@ class periodoEscolarController extends Controller
      */
     public function borrarPeriodoEscolar(Request $request)
     {
-        $periodoEscolar = PeriodoEscolar::where('IdPeriodoEscolar', $request->IdPeriodoEscolar);
-        $periodoEscolar->delete();
-        return Redirect::route('tipoDoc')->with('borradoCorrecto', 'Período escolar borrado correctamente');
+        PeriodoEscolar::find($request->IdPeriodoEscolar)->delete();
+        //return Redirect::route('tipoDoc')->with('borradoCorrecto', 'Período escolar borrado correctamente');
     }
 }

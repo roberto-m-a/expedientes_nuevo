@@ -80,7 +80,7 @@ class DocumentTest extends TestCase
         $this->assertInstanceOf(Departamento::class, $document->departamento);
         $this->assertInstanceOf(User::class, $document->user);
     }
-
+    ////////////Pruebas de renderizado de vistas////////////////////////
     public function test_retorna_a_la_vista_de_dashboard_por_ser_docente()
     {
         $departamento = Departamento::create([
@@ -382,14 +382,23 @@ class DocumentTest extends TestCase
         DB::table('personal')->insert([
             ['IdPersonal' => 1, 'Nombre' => 'Usuario Prueba 1', 'Apellidos' => 'Apellidos 1', 'Sexo' => 'Hombre', 'IdDepartamento' => 1],
             ['IdPersonal' => 2, 'Nombre' => 'Usuario Prueba 2', 'Apellidos' => 'Apellidos 2', 'Sexo' => 'Mujer', 'IdDepartamento' => 2],
+            ['IdPersonal' => 3, 'Nombre' => 'Usuario Prueba 3', 'Apellidos' => 'Apellidos 3', 'Sexo' => 'Mujer','IdDepartamento' => 2],
         ]);
 
-        DB::table('users')->insert([
+        DB::table('users')->insert([[
             'id' => 1,
             'email' => 'prueba@example.com',
             'password' => bcrypt('password'),
             'IdPersonal' => 1
-        ]);
+        ], [
+            'id' => 2,
+            'email' => 'prueba.admin@example.com',
+            'password' => bcrypt('password'),
+            'IdPersonal' => 3
+        ]]);
+        DB::table('administrador')->insert(
+            ['IdAdministrador' => 100, 'IdPersonal' => 3],
+        );
         DB::table('secretaria')->insert(
             ['IdSecretaria' => 100, 'IdPersonal' => 1],
         );
@@ -431,6 +440,20 @@ class DocumentTest extends TestCase
                 'IdExpediente' => 2,
                 'IdDepartamento' => 1,
                 'IdUsuario' => 1,
+                'URL' => 'http://example.com',
+                'Dependencia' => '',
+            ],
+            [
+                'Titulo' => 'Document Title',
+                'fechaExpedicion' => '2024-08-06',
+                'fechaEntrega' => null,
+                'Estatus' => 'En proceso',
+                'region' => 'Interno',
+                'IdTipoDocumento' => 1,
+                'IdPeriodoEscolar' => 1,
+                'IdExpediente' => 2,
+                'IdDepartamento' => 1,
+                'IdUsuario' => 2,
                 'URL' => 'http://example.com',
                 'Dependencia' => '',
             ]
@@ -505,6 +528,42 @@ class DocumentTest extends TestCase
         ]);
         return [$departamento, $personal, $administrador, $user, $expediente, $tipoDoc, $periodoEscolar];
     }
+    //////////////////Pruebas de subida de documento///////////////////////
+    
+    public function test_subir_documento_correctamente()
+    {
+        $crearUsuario = $this->crearUsuario();
+
+        $file = UploadedFile::fake()->create('document.pdf', 100, 'text/plain');
+
+        $request = Request::create(route('registrar.documento'), 'POST', [
+            'Expediente' => $crearUsuario[4]->IdExpediente,
+            'TipoDocumento' =>$crearUsuario[5]->IdTipoDocumento,
+            'Titulo' => 'Title doc example',
+            'FechaExpedicion' => '2024-02-01',
+            'Region' => 'Externo',
+            'Estatus' => 'Entregado',
+            'Dependencia' => 'Dependencia X',
+            'PeriodoEscolar' => $crearUsuario[6]->IdPeriodoEscolar,
+            'Archivo' => $file,
+            'FechaEntrega' => '2024-03-01',
+        ]);
+        $controller = new documentController();
+        $controller->nuevoDocumento($request);
+
+        $this->assertDatabaseHas('documento', [
+            'IdExpediente' => $crearUsuario[4]->IdExpediente,
+            'IdTipoDocumento' => $crearUsuario[5]->IdTipoDocumento,
+            'Titulo' => 'Title doc example',
+            'fechaExpedicion' => '2024-02-01',
+            'region' => 'Externo',
+            'dependencia' => 'Dependencia X',
+            'IdPeriodoEscolar' => $crearUsuario[6]->IdPeriodoEscolar,
+            'fechaEntrega' => '2024-03-01',
+            'IdUsuario' => $crearUsuario[3]->id,
+        ]);
+    }
+    //Pruebas de error
     public function test_subir_documento_falla_por_no_ser_pdf()
     {
         $crearUsuario = $this->crearUsuario();
@@ -546,108 +605,139 @@ class DocumentTest extends TestCase
         $controller = new documentController();
         $controller->nuevoDocumento($request);
     }
-
-    public function test_subir_documento_correctamente()
+    public function test_subir_documento_falla_por_no_colocar_titulo()
     {
         $crearUsuario = $this->crearUsuario();
 
         $file = UploadedFile::fake()->create('document.pdf', 100, 'text/plain');
-
-        $request = Request::create(route('registrar.documento'), 'POST', [
-            'Expediente' => ['IdExpediente' => $crearUsuario[4]->IdExpediente],
-            'TipoDocumento' => ['IdTipoDocumento' => $crearUsuario[5]->IdTipoDocumento],
-            'Titulo' => 'Title doc example',
-            'FechaExpedicion' => '2024-02-01',
-            'Region' => 'Externo',
-            'Estatus' => 'Entregado',
-            'Dependencia' => 'Dependencia X',
-            'PeriodoEscolar' => ['IdPeriodoEscolar' => $crearUsuario[6]->IdPeriodoEscolar],
-            'Archivo' => $file,
-            'FechaEntrega' => '2024-03-01',
-        ]);
-        $controller = new documentController();
-        $controller->nuevoDocumento($request);
-
-        $this->assertDatabaseHas('documento', [
-            'IdExpediente' => $crearUsuario[4]->IdExpediente,
-            'IdTipoDocumento' => $crearUsuario[5]->IdTipoDocumento,
-            'Titulo' => 'Title doc example',
-            'fechaExpedicion' => '2024-02-01',
-            'region' => 'Externo',
-            'dependencia' => 'Dependencia X',
-            'IdPeriodoEscolar' => $crearUsuario[6]->IdPeriodoEscolar,
-            'fechaEntrega' => '2024-03-01',
-            'IdUsuario' => $crearUsuario[3]->id,
-        ]);
-    }
-
-    public function test_validar_documento_falla_por_no_ser_pdf()
-    {
-        $crearUsuario = $this->crearUsuario();
-
-        $file = UploadedFile::fake()->create('document.txt', 100, 'text/plain');
         $this->expectException(ValidationException::class);
-        $this->expectExceptionMessage('Debes de ingresar un archivo PDF');
+        $this->expectExceptionMessage('El campo titulo es obligatorio.');
         $request = Request::create(route('registrar.documento'), 'POST', [
             'Expediente' => $crearUsuario[4]->IdExpediente,
             'TipoDocumento' => $crearUsuario[5]->IdTipoDocumento,
-            'Titulo' => 'Title doc example',
-            'FechaExpedicion' => '2024-02-01',
-            'Region' => 'Interno',
-            'PeriodoEscolar' => $crearUsuario[6]->IdPeriodoEscolar,
-            'Archivo' => $file,
-        ]);
-        $controller = new documentController();
-        $controller->validarDocumento($request);
-    }
-    public function test_validar_documento_falla_por_fechas_incorrectas()
-    {
-        $crearUsuario = $this->crearUsuario();
-        $this->expectException(ValidationException::class);
-        $this->expectExceptionMessage('Las fecha de expedición no puede ser despues de la fecha de entrega');
-        $request = Request::create(route('registrar.documento'), 'POST', [
-            'Expediente' => $crearUsuario[4]->IdExpediente,
-            'TipoDocumento' => $crearUsuario[5]->IdTipoDocumento,
-            'Titulo' => 'Title doc example',
+            'Titulo' => '',
             'FechaExpedicion' => '2024-02-01',
             'Region' => 'Interno',
             'Departamento' => $crearUsuario[0]->IdDepartamento,
             'Estatus' => 'Entregado',
             'PeriodoEscolar' => $crearUsuario[6]->IdPeriodoEscolar,
-
-            'FechaEntrega' => '2024-01-01',
-        ]);
-        $controller = new documentController();
-        $controller->validarDocumento($request);
-    }
-
-    public function test_validar_documento_correctamente()
-    {
-        $crearUsuario = $this->crearUsuario();
-
-        $file = UploadedFile::fake()->create('document.pdf', 100, 'text/plain');
-
-        $request = Request::create(route('registrar.documento'), 'POST', [
-            'Expediente' => ['IdExpediente' => $crearUsuario[4]->IdExpediente],
-            'TipoDocumento' => ['IdTipoDocumento' => $crearUsuario[5]->IdTipoDocumento],
-            'Titulo' => 'Title doc example',
-            'FechaExpedicion' => '2024-02-01',
-            'Region' => 'Externo',
-            'Estatus' => 'Entregado',
-            'Dependencia' => 'Dependencia X',
-            'PeriodoEscolar' => ['IdPeriodoEscolar' => $crearUsuario[6]->IdPeriodoEscolar],
             'Archivo' => $file,
             'FechaEntrega' => '2024-03-01',
         ]);
         $controller = new documentController();
-        try {
-            $controller->validarDocumento($request);
-        } catch (ValidationException $e) {
-            $this->fail('No se esperaba una excepción de validación, pero se lanzó una: ' . $e->getMessage());
-        }
-        $this->assertTrue(true); //se hace esta asercion para saber si llego y no se quedo en el catch
+        $controller->nuevoDocumento($request);
     }
+    public function test_subir_documento_falla_por_no_colocar_expediente()
+    {
+        $crearUsuario = $this->crearUsuario();
 
+        $file = UploadedFile::fake()->create('document.pdf', 100, 'text/plain');
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('El campo expediente es obligatorio.');
+        $request = Request::create(route('registrar.documento'), 'POST', [
+            'Expediente' => '',
+            'TipoDocumento' => $crearUsuario[5]->IdTipoDocumento,
+            'Titulo' => 'titulo',
+            'FechaExpedicion' => '2024-02-01',
+            'Region' => 'Interno',
+            'Departamento' => $crearUsuario[0]->IdDepartamento,
+            'Estatus' => 'Entregado',
+            'PeriodoEscolar' => $crearUsuario[6]->IdPeriodoEscolar,
+            'Archivo' => $file,
+            'FechaEntrega' => '2024-03-01',
+        ]);
+        $controller = new documentController();
+        $controller->nuevoDocumento($request);
+    }
+    public function test_subir_documento_falla_por_no_colocar_tipo_documento()
+    {
+        $crearUsuario = $this->crearUsuario();
+
+        $file = UploadedFile::fake()->create('document.pdf', 100, 'text/plain');
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('El campo tipo documento es obligatorio.');
+        $request = Request::create(route('registrar.documento'), 'POST', [
+            'Expediente' => $crearUsuario[4]->IdExpediente,
+            'TipoDocumento' => '',
+            'Titulo' => 'titulo',
+            'FechaExpedicion' => '2024-02-01',
+            'Region' => 'Interno',
+            'Departamento' => $crearUsuario[0]->IdDepartamento,
+            'Estatus' => 'Entregado',
+            'PeriodoEscolar' => $crearUsuario[6]->IdPeriodoEscolar,
+            'Archivo' => $file,
+            'FechaEntrega' => '2024-03-01',
+        ]);
+        $controller = new documentController();
+        $controller->nuevoDocumento($request);
+    }
+    public function test_subir_documento_falla_por_no_colocar_departamento()
+    {
+        $crearUsuario = $this->crearUsuario();
+
+        $file = UploadedFile::fake()->create('document.pdf', 100, 'text/plain');
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('El campo departamento es obligatorio.');
+        $request = Request::create(route('registrar.documento'), 'POST', [
+            'Expediente' => $crearUsuario[4]->IdExpediente,
+            'TipoDocumento' => $crearUsuario[5]->IdTipoDocumento,
+            'Titulo' => 'titulo',
+            'FechaExpedicion' => '2024-02-01',
+            'Region' => 'Interno',
+            'Departamento' => '',
+            'Estatus' => 'Entregado',
+            'PeriodoEscolar' => $crearUsuario[6]->IdPeriodoEscolar,
+            'Archivo' => $file,
+            'FechaEntrega' => '2024-03-01',
+        ]);
+        $controller = new documentController();
+        $controller->nuevoDocumento($request);
+    }
+    public function test_subir_documento_falla_por_no_colocar_periodo_escolar()
+    {
+        $crearUsuario = $this->crearUsuario();
+
+        $file = UploadedFile::fake()->create('document.pdf', 100, 'text/plain');
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('El campo periodo escolar es obligatorio.');
+        $request = Request::create(route('registrar.documento'), 'POST', [
+            'Expediente' => $crearUsuario[4]->IdExpediente,
+            'TipoDocumento' => $crearUsuario[5]->IdTipoDocumento,
+            'Titulo' => 'titulo',
+            'FechaExpedicion' => '2024-02-01',
+            'Region' => 'Interno',
+            'Departamento' => $crearUsuario[0]->IdDepartamento,
+            'Estatus' => 'Entregado',
+            'PeriodoEscolar' => '',
+            'Archivo' => $file,
+            'FechaEntrega' => '2024-03-01',
+        ]);
+        $controller = new documentController();
+        $controller->nuevoDocumento($request);
+    }
+    public function test_subir_documento_falla_por_no_colocar_archivo()
+    {
+        $crearUsuario = $this->crearUsuario();
+
+        $file = UploadedFile::fake()->create('document.pdf', 100, 'text/plain');
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('El campo archivo es obligatorio.');
+        $request = Request::create(route('registrar.documento'), 'POST', [
+            'Expediente' => $crearUsuario[4]->IdExpediente,
+            'TipoDocumento' => $crearUsuario[5]->IdTipoDocumento,
+            'Titulo' => 'titulo',
+            'FechaExpedicion' => '2024-02-01',
+            'Region' => 'Interno',
+            'Departamento' => $crearUsuario[0]->IdDepartamento,
+            'Estatus' => 'Entregado',
+            'PeriodoEscolar' => $crearUsuario[6]->IdPeriodoEscolar,
+            'Archivo' => '',
+            'FechaEntrega' => '2024-03-01',
+        ]);
+        $controller = new documentController();
+        $controller->nuevoDocumento($request);
+    } 
+    /////////////////////////Prueba del metodo de editar documento/////////////////////
     public function test_editar_documento_correctamente() {
         $crearUsuario = $this->crearUsuario();
     
@@ -658,9 +748,6 @@ class DocumentTest extends TestCase
         // Subir el archivo al storage
         $path = Storage::putFileAs('public/documents', $file, '2024-08-06_12_00_00_document.pdf');
         $url = asset('storage/documents/2024-08-06_12_00_00_document.pdf');
-    
-        $crearUsuario[4]->numDocumentos = 2;
-        $crearUsuario[4]->save();
 
         // Crear documento inicial en la base de datos
         $document = document::create([
@@ -708,14 +795,14 @@ class DocumentTest extends TestCase
     
         $request = Request::create(route('documento.editar'), 'POST', [
             'IdDocumento' => $document->IdDocumento,
-            'Expediente' => ['IdExpediente' => $expedienteN->IdExpediente],
-            'TipoDocumento' => ['IdTipoDocumento' => $nuevoTipoDoc->IdTipoDocumento],
+            'Expediente' => $expedienteN->IdExpediente,
+            'TipoDocumento' =>$nuevoTipoDoc->IdTipoDocumento,
             'Titulo' => 'Title doc example edit',
             'FechaExpedicion' => '2024-03-01',
             'Region' => 'Externo',
             'Estatus' => 'Entregado',
             'Dependencia' => 'Dependencia X',
-            'PeriodoEscolar' => ['IdPeriodoEscolar' => $crearUsuario[6]->IdPeriodoEscolar],
+            'PeriodoEscolar' => $crearUsuario[6]->IdPeriodoEscolar,
             'Archivo' => $nuevoFile,
             'FechaEntrega' => '2024-03-15',
         ]);
@@ -741,7 +828,255 @@ class DocumentTest extends TestCase
         // Verifica que el URL del documento fue modificado (no es el mismo que antes)
         $this->assertNotEquals($document->fresh()->URL, $URLAntiguo);
     }
+    ////////////////Pruebas para validar documentos/////////////////
+    public function test_validar_documento_correctamente()
+    {
+        $crearUsuario = $this->crearUsuario();
 
+        $file = UploadedFile::fake()->create('document.pdf', 100, 'text/plain');
+
+        $request = Request::create(route('registrar.documento'), 'POST', [
+            'Expediente' => ['IdExpediente' => $crearUsuario[4]->IdExpediente],
+            'TipoDocumento' => ['IdTipoDocumento' => $crearUsuario[5]->IdTipoDocumento],
+            'Titulo' => 'Title doc example',
+            'FechaExpedicion' => '2024-02-01',
+            'Region' => 'Externo',
+            'Estatus' => 'Entregado',
+            'Dependencia' => 'Dependencia X',
+            'PeriodoEscolar' => ['IdPeriodoEscolar' => $crearUsuario[6]->IdPeriodoEscolar],
+            'Archivo' => $file,
+            'FechaEntrega' => '2024-03-01',
+        ]);
+        $controller = new documentController();
+        try {
+            $controller->validarDocumento($request);
+        } catch (ValidationException $e) {
+            $this->fail('No se esperaba una excepción de validación, pero se lanzó una: ' . $e->getMessage());
+        }
+        $this->assertTrue(true); //se hace esta asercion para saber si llego y no se quedo en el catch
+    }
+    //Pruebas de error
+    public function test_validar_documento_falla_por_no_ser_pdf()
+    {
+        $crearUsuario = $this->crearUsuario();
+
+        $file = UploadedFile::fake()->create('document.txt', 100, 'text/plain');
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Debes de ingresar un archivo PDF');
+        $request = Request::create(route('registrar.documento'), 'POST', [
+            'Expediente' => $crearUsuario[4]->IdExpediente,
+            'TipoDocumento' => $crearUsuario[5]->IdTipoDocumento,
+            'Titulo' => 'Title doc example',
+            'FechaExpedicion' => '2024-02-01',
+            'Region' => 'Interno',
+            'PeriodoEscolar' => $crearUsuario[6]->IdPeriodoEscolar,
+            'Archivo' => $file,
+        ]);
+        $controller = new documentController();
+        $controller->validarDocumento($request);
+    }
+    public function test_validar_documento_falla_por_fechas_incorrectas()
+    {
+        $crearUsuario = $this->crearUsuario();
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Las fecha de expedición no puede ser despues de la fecha de entrega');
+        $request = Request::create(route('registrar.documento'), 'POST', [
+            'Expediente' => $crearUsuario[4]->IdExpediente,
+            'TipoDocumento' => $crearUsuario[5]->IdTipoDocumento,
+            'Titulo' => 'Title doc example',
+            'FechaExpedicion' => '2024-02-01',
+            'Region' => 'Interno',
+            'Departamento' => $crearUsuario[0]->IdDepartamento,
+            'Estatus' => 'Entregado',
+            'PeriodoEscolar' => $crearUsuario[6]->IdPeriodoEscolar,
+
+            'FechaEntrega' => '2024-01-01',
+        ]);
+        $controller = new documentController();
+        $controller->validarDocumento($request);
+    }
+    public function test_validar_documento_falla_por_no_colocar_titulo()
+    {
+        $crearUsuario = $this->crearUsuario();
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('El campo titulo es obligatorio.');
+        $request = Request::create(route('registrar.documento'), 'POST', [
+            'Expediente' => $crearUsuario[4]->IdExpediente,
+            'TipoDocumento' => $crearUsuario[5]->IdTipoDocumento,
+            'Titulo' => '',
+            'FechaExpedicion' => '2024-02-01',
+            'Region' => 'Interno',
+            'Departamento' => $crearUsuario[0]->IdDepartamento,
+            'Estatus' => 'Entregado',
+            'PeriodoEscolar' => $crearUsuario[6]->IdPeriodoEscolar,
+            'FechaEntrega' => '2024-03-01',
+        ]);
+        $controller = new documentController();
+        $controller->validarDocumento($request);
+    }
+    public function test_validar_documento_falla_por_no_colocar_expediente()
+    {
+        $crearUsuario = $this->crearUsuario();
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('El campo expediente es obligatorio.');
+        $request = Request::create(route('registrar.documento'), 'POST', [
+            'Expediente' => '',
+            'TipoDocumento' => $crearUsuario[5]->IdTipoDocumento,
+            'Titulo' => 'titulo',
+            'FechaExpedicion' => '2024-02-01',
+            'Region' => 'Interno',
+            'Departamento' => $crearUsuario[0]->IdDepartamento,
+            'Estatus' => 'Entregado',
+            'PeriodoEscolar' => $crearUsuario[6]->IdPeriodoEscolar,
+            'FechaEntrega' => '2024-03-01',
+        ]);
+        $controller = new documentController();
+        $controller->validarDocumento($request);
+    }
+    public function test_validar_documento_falla_por_no_colocar_tipo_documento()
+    {
+        $crearUsuario = $this->crearUsuario();
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('El campo tipo documento es obligatorio.');
+        $request = Request::create(route('registrar.documento'), 'POST', [
+            'Expediente' => $crearUsuario[4]->IdExpediente,
+            'TipoDocumento' => '',
+            'Titulo' => 'titulo',
+            'FechaExpedicion' => '2024-02-01',
+            'Region' => 'Interno',
+            'Departamento' => $crearUsuario[0]->IdDepartamento,
+            'Estatus' => 'Entregado',
+            'PeriodoEscolar' => $crearUsuario[6]->IdPeriodoEscolar,
+            'FechaEntrega' => '2024-03-01',
+        ]);
+        $controller = new documentController();
+        $controller->validarDocumento($request);
+    }
+    public function test_validar_documento_falla_por_no_colocar_departamento()
+    {
+        $crearUsuario = $this->crearUsuario();
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('El campo departamento es obligatorio.');
+        $request = Request::create(route('registrar.documento'), 'POST', [
+            'Expediente' => $crearUsuario[4]->IdExpediente,
+            'TipoDocumento' => $crearUsuario[5]->IdTipoDocumento,
+            'Titulo' => 'titulo',
+            'FechaExpedicion' => '2024-02-01',
+            'Region' => 'Interno',
+            'Departamento' => '',
+            'Estatus' => 'Entregado',
+            'PeriodoEscolar' => $crearUsuario[6]->IdPeriodoEscolar,
+            'FechaEntrega' => '2024-03-01',
+        ]);
+        $controller = new documentController();
+        $controller->validarDocumento($request);
+    }
+    public function test_validar_documento_falla_por_no_colocar_periodo_escolar()
+    {
+        $crearUsuario = $this->crearUsuario();
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('El campo periodo escolar es obligatorio.');
+        $request = Request::create(route('registrar.documento'), 'POST', [
+            'Expediente' => $crearUsuario[4]->IdExpediente,
+            'TipoDocumento' => $crearUsuario[5]->IdTipoDocumento,
+            'Titulo' => 'titulo',
+            'FechaExpedicion' => '2024-02-01',
+            'Region' => 'Interno',
+            'Departamento' => $crearUsuario[0]->IdDepartamento,
+            'Estatus' => 'Entregado',
+            'PeriodoEscolar' => '',
+            'FechaEntrega' => '2024-03-01',
+        ]);
+        $controller = new documentController();
+        $controller->validarDocumento($request);
+    }
+    //////////////////Pruebas para la entrega de documentos con el metodo de entregarDocumento y validarEntrega/////////////////////////
+    public function test_validar_entrega_correctamente(){
+        $crearUsuario = $this->crearUsuario();
+        // Simular archivo PDF y subirlo al almacenamiento
+        Storage::fake('public'); // Simula el sistema de archivos
+        $file = UploadedFile::fake()->create('document.pdf', 100, 'application/pdf');
+    
+        // Subir el archivo al storage
+        $path = Storage::putFileAs('public/documents', $file, '2024-08-06_12_00_00_document.pdf');
+        $url = asset('storage/documents/2024-08-06_12_00_00_document.pdf');
+    
+        $crearUsuario[4]->numDocumentos = 2;
+        $crearUsuario[4]->save();
+        // Crear documento inicial en la base de datos
+        $document = document::create([
+            'Titulo' => 'Document Title',
+            'fechaExpedicion' => '2024-02-06',
+            'fechaEntrega' => null,
+            'Estatus' => 'Entregado',
+            'region' => 'Interno',
+            'IdTipoDocumento' => $crearUsuario[5]->IdTipoDocumento,
+            'IdPeriodoEscolar' => $crearUsuario[6]->IdPeriodoEscolar,
+            'IdExpediente' => $crearUsuario[4]->IdExpediente,
+            'IdDepartamento' => $crearUsuario[0]->IdDepartamento,
+            'IdUsuario' => $crearUsuario[3]->id,
+            'URL' => $url, // URL que apunta al archivo subido
+            'Dependencia' => '',
+        ]);
+        $file = UploadedFile::fake()->create('document.pdf', 100, 'text/plain');
+        $request = Request::create(route('validar.entrega'), 'POST', [
+            'IdDocumento' => $document->IdDocumento,
+            'FechaEntrega' => '2024-03-01',
+            'FechaExpedicion' => $document->fechaExpedicion,
+            'Archivo' => $file,
+        ]);
+        $controller = new documentController();
+        try {
+            $controller->validarEntrega($request);
+        } catch (ValidationException $e) {
+            $this->fail('No se esperaba una excepción de validación, pero se lanzó una: ' . $e->getMessage());
+        }
+        $this->assertTrue(true); //
+    }
+    public function test_entregar_documento_correctamente(){
+        $crearUsuario = $this->crearUsuario();
+        // Simular archivo PDF y subirlo al almacenamiento
+        Storage::fake('public'); // Simula el sistema de archivos
+        $file = UploadedFile::fake()->create('document.pdf', 100, 'application/pdf');
+    
+        // Subir el archivo al storage
+        $path = Storage::putFileAs('public/documents', $file, '2024-08-06_12_00_00_document.pdf');
+        $url = asset('storage/documents/2024-08-06_12_00_00_document.pdf');
+    
+        $crearUsuario[4]->numDocumentos = 2;
+        $crearUsuario[4]->save();
+        // Crear documento inicial en la base de datos
+        $document = document::create([
+            'Titulo' => 'Document Title',
+            'fechaExpedicion' => '2024-02-06',
+            'fechaEntrega' => null,
+            'Estatus' => 'Entregado',
+            'region' => 'Interno',
+            'IdTipoDocumento' => $crearUsuario[5]->IdTipoDocumento,
+            'IdPeriodoEscolar' => $crearUsuario[6]->IdPeriodoEscolar,
+            'IdExpediente' => $crearUsuario[4]->IdExpediente,
+            'IdDepartamento' => $crearUsuario[0]->IdDepartamento,
+            'IdUsuario' => $crearUsuario[3]->id,
+            'URL' => $url, // URL que apunta al archivo subido
+            'Dependencia' => '',
+        ]);
+        $URLAntiguo = $document->URL;
+        $file = UploadedFile::fake()->create('document.pdf', 100, 'text/plain');
+        $request = Request::create(route('entregar.documento'), 'POST', [
+            'IdDocumento' => $document->IdDocumento,
+            'FechaEntrega' => '2024-03-01',
+            'FechaExpedicion' => $document->fechaExpedicion,
+            'Archivo' => $file,
+        ]);
+        $controller = new documentController();
+        $controller->entregarDocumento($request);
+        $this->assertDatabaseHas('documento',[
+            'IdDocumento' => $document->IdDocumento,
+            'fechaEntrega' =>'2024-03-01',
+        ]);
+        $this->assertNotEquals($document->fresh()->URL, $URLAntiguo);
+    }
+    //Pruebas de error
     public function test_validar_entrega_falla_fechas_incorrectas(){
         $crearUsuario = $this->crearUsuario();
         $this->expectException(ValidationException::class);
@@ -823,8 +1158,7 @@ class DocumentTest extends TestCase
         $controller = new documentController();
         $controller->validarEntrega($request);
     }
-
-    public function test_validar_entrega_correctamente(){
+    public function test_validar_entrega_falla_por_no_colocar_fecha_entrega(){
         $crearUsuario = $this->crearUsuario();
         // Simular archivo PDF y subirlo al almacenamiento
         Storage::fake('public'); // Simula el sistema de archivos
@@ -839,7 +1173,7 @@ class DocumentTest extends TestCase
         // Crear documento inicial en la base de datos
         $document = document::create([
             'Titulo' => 'Document Title',
-            'fechaExpedicion' => '2024-02-06',
+            'fechaExpedicion' => '2024-03-01',
             'fechaEntrega' => null,
             'Estatus' => 'Entregado',
             'region' => 'Interno',
@@ -851,63 +1185,16 @@ class DocumentTest extends TestCase
             'URL' => $url, // URL que apunta al archivo subido
             'Dependencia' => '',
         ]);
-        $file = UploadedFile::fake()->create('document.pdf', 100, 'text/plain');
+        $file = UploadedFile::fake()->create('document.txt', 100, 'text/plain');
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('El campo fecha entrega es obligatorio.');
         $request = Request::create(route('validar.entrega'), 'POST', [
             'IdDocumento' => $document->IdDocumento,
-            'FechaEntrega' => '2024-03-01',
+            'FechaEntrega' => '',
             'FechaExpedicion' => $document->fechaExpedicion,
             'Archivo' => $file,
         ]);
         $controller = new documentController();
-        try {
-            $controller->validarEntrega($request);
-        } catch (ValidationException $e) {
-            $this->fail('No se esperaba una excepción de validación, pero se lanzó una: ' . $e->getMessage());
-        }
-        $this->assertTrue(true); //
-    }
-
-    public function test_entregar_documento_correctamente(){
-        $crearUsuario = $this->crearUsuario();
-        // Simular archivo PDF y subirlo al almacenamiento
-        Storage::fake('public'); // Simula el sistema de archivos
-        $file = UploadedFile::fake()->create('document.pdf', 100, 'application/pdf');
-    
-        // Subir el archivo al storage
-        $path = Storage::putFileAs('public/documents', $file, '2024-08-06_12_00_00_document.pdf');
-        $url = asset('storage/documents/2024-08-06_12_00_00_document.pdf');
-    
-        $crearUsuario[4]->numDocumentos = 2;
-        $crearUsuario[4]->save();
-        // Crear documento inicial en la base de datos
-        $document = document::create([
-            'Titulo' => 'Document Title',
-            'fechaExpedicion' => '2024-02-06',
-            'fechaEntrega' => null,
-            'Estatus' => 'Entregado',
-            'region' => 'Interno',
-            'IdTipoDocumento' => $crearUsuario[5]->IdTipoDocumento,
-            'IdPeriodoEscolar' => $crearUsuario[6]->IdPeriodoEscolar,
-            'IdExpediente' => $crearUsuario[4]->IdExpediente,
-            'IdDepartamento' => $crearUsuario[0]->IdDepartamento,
-            'IdUsuario' => $crearUsuario[3]->id,
-            'URL' => $url, // URL que apunta al archivo subido
-            'Dependencia' => '',
-        ]);
-        $URLAntiguo = $document->URL;
-        $file = UploadedFile::fake()->create('document.pdf', 100, 'text/plain');
-        $request = Request::create(route('entregar.documento'), 'POST', [
-            'IdDocumento' => $document->IdDocumento,
-            'FechaEntrega' => '2024-03-01',
-            'FechaExpedicion' => $document->fechaExpedicion,
-            'Archivo' => $file,
-        ]);
-        $controller = new documentController();
-        $controller->entregarDocumento($request);
-        $this->assertDatabaseHas('documento',[
-            'IdDocumento' => $document->IdDocumento,
-            'fechaEntrega' =>'2024-03-01',
-        ]);
-        $this->assertNotEquals($document->fresh()->URL, $URLAntiguo);
-    }
+        $controller->validarEntrega($request);
+    }   
 }

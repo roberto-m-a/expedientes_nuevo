@@ -143,18 +143,18 @@ class documentController extends Controller
                 'fechaEntrega' => ($request->Estatus == 'Entregado') ? $request->FechaEntrega : null,
                 'Estatus' => ($request->Region == 'Interno') ? $request->Estatus : 'Entregado',
                 'region' => $request->Region,
-                'IdTipoDocumento' => $request->TipoDocumento['IdTipoDocumento'],
-                'IdPeriodoEscolar' => $request->PeriodoEscolar['IdPeriodoEscolar'],
-                'IdExpediente' => $request->Expediente['IdExpediente'],
-                'IdDepartamento' => ($request->Region == 'Externo') ? null : $request->Departamento['IdDepartamento'],
+                'IdTipoDocumento' => $request->TipoDocumento,
+                'IdPeriodoEscolar' => $request->PeriodoEscolar,
+                'IdExpediente' => $request->Expediente,
+                'IdDepartamento' => ($request->Region == 'Externo') ? null : $request->Departamento,
                 'IdUsuario' => Auth::user()->id,
                 'URL' => asset('storage/documents/' . $nombreArchivo),
                 'Dependencia' => ($request->Region == 'Interno') ? '' : $request->Dependencia,
             ]);
-            $expediente = expediente::find($request->Expediente['IdExpediente']);
+            $expediente = expediente::find($request->Expediente);
             $expediente->update(['numDocumentos' => $expediente->numDocumentos + 1]);
         }
-        return Redirect::route('nuevoDocumento')->with('creacionCorrecta', 'Se ha registrado el documento con éxito.');
+        //return Redirect::route('nuevoDocumento')->with('creacionCorrecta', 'Se ha registrado el documento con éxito.');
     }
     /**
      * Editar Documento
@@ -169,6 +169,7 @@ class documentController extends Controller
      */
     public function editarDocumento(Request $request)
     {
+        $this->validarDocumento($request);
         $documento = document::find($request->IdDocumento);
         $expediente = $documento->expediente;
         $documentoOriginal = clone $documento; // Clonar el documento original
@@ -186,11 +187,11 @@ class documentController extends Controller
                 $documento->URL = asset('storage/documents/' . $nombreArchivo);
             }
         }
-        if ($expediente->IdExpediente != $request->Expediente['IdExpediente']) {
+        if ($expediente->IdExpediente != $request->Expediente) {
             $expediente->update([
                 'numDocumentos' => $expediente->numDocumentos - 1,
             ]);
-            $nuevoExpediente = expediente::find($request->Expediente['IdExpediente']);
+            $nuevoExpediente = expediente::find($request->Expediente);
             $nuevoExpediente->update([
                 'numDocumentos' => $nuevoExpediente->numDocumentos + 1,
             ]);
@@ -203,10 +204,10 @@ class documentController extends Controller
         $documento->FechaEntrega = ($request->Estatus == 'Entregado') ? $request->FechaEntrega : null;
         $documento->Estatus = ($request->Region == 'Interno') ? $request->Estatus : 'Entregado';
         $documento->region = $request->Region;
-        $documento->IdTipoDocumento = $request->TipoDocumento['IdTipoDocumento'];
-        $documento->IdPeriodoEscolar = $request->PeriodoEscolar['IdPeriodoEscolar'];
-        $documento->IdExpediente = $request->Expediente['IdExpediente'];
-        $documento->IdDepartamento = ($request->Region == 'Externo') ? null : $request->Departamento['IdDepartamento'];
+        $documento->IdTipoDocumento = $request->TipoDocumento;
+        $documento->IdPeriodoEscolar = $request->PeriodoEscolar;
+        $documento->IdExpediente = $request->Expediente;
+        $documento->IdDepartamento = ($request->Region == 'Externo') ? null : $request->Departamento;
         $documento->Dependencia = ($request->Region == 'Interno') ? '' : $request->Dependencia;
 
         $documento->save();
@@ -272,6 +273,7 @@ class documentController extends Controller
      */
     public function entregarDocumento(Request $request)
     {
+        $this->validarEntrega($request);
         $documento = document::find($request->IdDocumento);
         if ($request->Archivo != '') {
             $nombreArchivo = explode('documents/', $documento->URL);
@@ -289,7 +291,7 @@ class documentController extends Controller
         $documento->FechaEntrega = $request->FechaEntrega;
         $documento->Estatus = 'Entregado';
         $documento->save();
-        return back()->with('creacionCorrecta', 'Se ha entregado el documento correctamente');
+        //return back()->with('creacionCorrecta', 'Se ha entregado el documento correctamente');
     }
     /**
      * Llama al método estático en el modelo para validar la entrega de un documento

@@ -77,7 +77,7 @@ class PeriodoEscolarTest extends TestCase
         $this->assertInstanceOf(Collection::class, $periodoEscolar->documento);
         $this->assertInstanceOf(document::class, $periodoEscolar->documento->first());
     }
-
+    //////////Pruebas de renderizado de vistas///////////////////
     public function test_retorna_a_la_vista_de_dashboard_por_ser_docente()
     {
         $departamento = Departamento::create([
@@ -114,7 +114,6 @@ class PeriodoEscolarTest extends TestCase
         // Verificar la URL de redirección
         $this->assertEquals(url('/dashboard'), $response->getTargetUrl());
     }
-
     public function test_renderiza_correctamente_la_vista_de_departamentos_secretaria(){
         $departamento = Departamento::create([
             'IdDepartamento' => 1234,
@@ -155,7 +154,6 @@ class PeriodoEscolarTest extends TestCase
         $responseContent = $response->toResponse($request)->getContent();
         $this->assertStringContainsString('Dashboard_secre_PeriodoEscolar', $responseContent);   
     }
-
     public function test_renderiza_correctamente_la_vista_de_departamentos_administrador(){
         $departamento = Departamento::create([
             'IdDepartamento' => 1234,
@@ -196,7 +194,7 @@ class PeriodoEscolarTest extends TestCase
         $responseContent = $response->toResponse($request)->getContent();
         $this->assertStringContainsString('Dashboard_admin_PeriodoEscolar', $responseContent);   
     }
-
+    ////////////////Pruebas de crear nuevo periodo escolar////////////////////
     public function test_Nuevo_periodoEscolar_exitoso()
     {
         // Desactiva eventos para evitar que realmente se dispare el evento Registered
@@ -219,7 +217,7 @@ class PeriodoEscolarTest extends TestCase
             'nombre_corto' => 'ENE-JUN 2024',
         ]);
     }
-
+    //Pruebas de error
     public function test_Nuevo_periodo_escolar_falla_por_no_ser_unico(){
         PeriodoEscolar::create([
             'fechaInicio' => '2024-01-01',
@@ -241,9 +239,8 @@ class PeriodoEscolarTest extends TestCase
 
         $controller->nuevoPeriodoEscolar($request);
     }
-
     public function test_Nuevo_periodo_escolar_falla_por_fechas__de_inicio_mayor_que_la_fecha_de_termino(){
-        $this->expectExceptionMessage('La fecha de inicio no puede ser despues de la fecha de termino');
+        $this->expectExceptionMessage('El campo fecha termino debe ser una fecha posterior a fecha inicio.');
         $this->expectException(ValidationException::class);
         // Crear una solicitud simulada
         $request = Request::create('/periodoEscolar', 'PUT', [
@@ -256,9 +253,8 @@ class PeriodoEscolarTest extends TestCase
 
         $controller->nuevoPeriodoEscolar($request);
     }
-
     public function test_Nuevo_periodo_escolar_falla_por_fechas_iguales(){
-        $this->expectExceptionMessage('Las fechas no pueden ser iguales');
+        $this->expectExceptionMessage('El campo fecha termino debe ser una fecha posterior a fecha inicio.');
         $this->expectException(ValidationException::class);
         // Crear una solicitud simulada
         $request = Request::create('/periodoEscolar', 'PUT', [
@@ -271,7 +267,7 @@ class PeriodoEscolarTest extends TestCase
 
         $controller->nuevoPeriodoEscolar($request);
     }
-
+    /////////////////Pruebas para editar periodos escolares/////////////////////
     public function test_editar_PeriodoEscolar(){
         $periodoEscolar = PeriodoEscolar::create([
             'fechaInicio' => '2024-07-01',
@@ -297,7 +293,70 @@ class PeriodoEscolarTest extends TestCase
             'nombre_corto' => 'ENE-JUN 2023 2',
         ]);
     }
+    //Pruebas de error
+    public function test_editar_PeriodoEscolar_error_por_no_tener_nombre_unico(){
+        PeriodoEscolar::create([
+            'fechaInicio' => '2024-01-01',
+            'fechaTermino' => '2024-06-01',
+            'nombre_corto' => 'ENE-JUN 2024',
+        ]);
+        $periodoEscolar = PeriodoEscolar::create([
+            'fechaInicio' => '2024-07-01',
+            'fechaTermino' => '2024-12-01',
+            'nombre_corto' => 'JUL-DIC 2024',
+        ]);
 
+        $request = Request::create(route('periodoEscolar.editar'), 'PUT', [
+            'IdPeriodoEscolar' => $periodoEscolar->IdPeriodoEscolar,
+            'fechaInicio' => '2023-01-01',
+            'fechaTermino' => '2023-06-01',
+            'nombre_corto' => 'ENE-JUN 2024',
+        ]);
+        $this->expectExceptionMessage('El campo nombre corto ya ha sido registrado.');
+        $this->expectException(ValidationException::class);
+        $controller = new periodoEscolarController();
+
+        $controller->editarPeriodoEscolar($request);
+    }
+    public function test_editar_PeriodoEscolar_error_por_fecha_de_inicio_mayor_que_la_fecha_termino(){
+        $periodoEscolar = PeriodoEscolar::create([
+            'fechaInicio' => '2024-07-01',
+            'fechaTermino' => '2024-12-01',
+            'nombre_corto' => 'JUL-DIC 2024',
+        ]);
+
+        $request = Request::create(route('periodoEscolar.editar'), 'PUT', [
+            'IdPeriodoEscolar' => $periodoEscolar->IdPeriodoEscolar,
+            'fechaInicio' => '2024-01-01',
+            'fechaTermino' => '2023-06-01',
+            'nombre_corto' => 'ENE-JUN 2023',
+        ]);
+        $this->expectExceptionMessage('El campo fecha termino debe ser una fecha posterior a fecha inicio.');
+        $this->expectException(ValidationException::class);
+        $controller = new periodoEscolarController();
+
+        $controller->editarPeriodoEscolar($request);
+    }
+    public function test_editar_PeriodoEscolar_error_por_fechas_iguales(){
+        $periodoEscolar = PeriodoEscolar::create([
+            'fechaInicio' => '2024-07-01',
+            'fechaTermino' => '2024-12-01',
+            'nombre_corto' => 'JUL-DIC 2024',
+        ]);
+
+        $request = Request::create(route('periodoEscolar.editar'), 'PUT', [
+            'IdPeriodoEscolar' => $periodoEscolar->IdPeriodoEscolar,
+            'fechaInicio' => '2023-06-01',
+            'fechaTermino' => '2023-06-01',
+            'nombre_corto' => 'ENE-JUN 2023',
+        ]);
+        $this->expectExceptionMessage('El campo fecha termino debe ser una fecha posterior a fecha inicio.');
+        $this->expectException(ValidationException::class);
+        $controller = new periodoEscolarController();
+
+        $controller->editarPeriodoEscolar($request);
+    }
+    //////////Pruebas de borrado de periodo escolar//////////////
     public function test_borrar_periodoEscolar(){
         $periodoEscolar = PeriodoEscolar::create([
             'fechaInicio' => '2024-07-01',

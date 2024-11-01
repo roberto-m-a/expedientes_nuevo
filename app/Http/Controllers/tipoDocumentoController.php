@@ -62,7 +62,8 @@ class tipoDocumentoController extends Controller
         ]);
         //return response()->json(['message' => 'Tipo de documento creado correctamente', 'redirect' => route('tipoDoc'), 'flash' => 'Tipo de documento creado con éxito']);
         //return redirect()->route('tipoDoc')->with('creacionCorrecta', 'Tipo de documento creado correctamente');
-        return redirect()->route('tipoDoc')->with('creacionCorrecta', 'Tipo de documento creado correctamente');
+        //return Redirect::route('tipoDoc')->with('creacionCorrecta', 'Tipo de documento creado correctamente');
+        //$this->load()->view(route('tipoDoc'))->with('creacionCorrecta','Tipo de documnentos creado correctamente');
     }
     /**
      * Edita un tipo de documento
@@ -77,10 +78,11 @@ class tipoDocumentoController extends Controller
      */
     public function editarTipoDoc(Request $request)
     {
+        $this->validacionTipoDoc($request);
         TipoDocumento::find($request->idtipoDoc)->update(
             ["nombreTipoDoc" => $request->nombreTipoDoc,]
         );
-        return Redirect::route('tipoDoc')->with('actualizacionCorrecta', 'Tipo de documento actualizado correctamente');
+        //return Redirect::route('tipoDoc')->with('actualizacionCorrecta', 'Tipo de documento actualizado correctamente');
     }
     /**
      * Valida un tipo de documento
@@ -108,6 +110,6 @@ class tipoDocumentoController extends Controller
     public function borrarTipoDoc(Request $request)
     {
         TipoDocumento::find($request->idtipoDoc)->delete();
-        return Redirect::route('tipoDoc')->with('borradoCorrecto', 'Tipo de documento borrado correctamente');
+        //return Redirect::route('tipoDoc')->with('borradoCorrecto', 'Tipo de documento borrado correctamente');
     }
 }

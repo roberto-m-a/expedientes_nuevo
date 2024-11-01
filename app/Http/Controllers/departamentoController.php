@@ -51,7 +51,7 @@ class departamentoController extends Controller
         Departamento::create([
             "nombreDepartamento" => $request->nombreDepartamento,
         ]);
-        return Redirect::route('departamento')->with('creacionCorrecta', 'Departamento creado correctamente');
+        //return Redirect::route('departamento')->with('creacionCorrecta', 'Departamento creado correctamente');
     }
     /**
      * Edita un departamento
@@ -66,9 +66,10 @@ class departamentoController extends Controller
      */
     public function editarDepartamento(Request $request)
     {
+        $this->validarDepartamento($request);
         Departamento::find($request->idDepartamento)
             ->update(['nombreDepartamento' => $request->nombreDepartamento]);
-        return Redirect::route('departamento')->with('actualizacionCorrecta', 'Departamento actualizado correctamente');
+        //return Redirect::route('departamento')->with('actualizacionCorrecta', 'Departamento actualizado correctamente');
     }
     /**
      * Valida un departamento
@@ -96,6 +97,6 @@ class departamentoController extends Controller
     public function borrarDepartamento(Request $request)
     {
         Departamento::find($request->idDepartamento)->delete();
-        return Redirect::route('departamento')->with('borradoCorrecto', 'Departamento borrado correctamente');
+        //return Redirect::route('departamento')->with('borradoCorrecto', 'Departamento borrado correctamente');
     }
 }

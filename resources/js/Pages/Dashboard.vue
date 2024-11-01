@@ -20,7 +20,13 @@ const props = defineProps({
     personal: {
         type: Object,
     },
+    docente: {
+        type: Object,
+    },
     departamentos: {
+        type: Array,
+    },
+    gradoAcademico:{
         type: Array,
     },
     documentos_data: {
@@ -30,27 +36,6 @@ const props = defineProps({
         type: String,
     }
 });
-const passwordInput = ref(null);
-
-const formDataUser = useForm({
-    password: '',
-    password_confirmation: '',
-    Departamento: (props.personal.IdDepartamento != null) ? props.departamentos.find(b => b.IdDepartamento === props.personal.IdDepartamento) : '',
-    Sexo: (props.personal.Sexo != null) ? props.personal.Sexo : 'Hombre',
-});
-const updatePassword = () => {
-    formDataUser.put(route('password.first'), {
-        preserveScroll: true,
-        onSuccess: () => formDataUser.reset(),
-        onError: () => {
-            if (formDataUser.errors.password) {
-                formDataUser.reset('password', 'password_confirmation');
-                passwordInput.value.focus();
-            }
-        },
-    });
-};
-
 //Para las graficas
 let cantidades = [];
 let labels = [];
@@ -80,54 +65,7 @@ const dataset = [
             </div>
         </template>
 
-        <Modal :show=verificarContraseña>
-            <div class="p-8">
-
-                <form @submit.prevent="updatePassword">
-                    <p>
-                        Ingresa los siguientes datos
-                    </p>
-                    <div>
-                        <InputLabel for="Departamento" value="Departamento" class="pt-2" />
-                        <v-select type="text" id="Departamento" label="nombreDepartamento"
-                            placeholder="Introduce el departamento del que proviene" :options="departamentos"
-                            :filterable="true" v-model="formDataUser.Departamento" class="border-white" />
-                        <InputError class="mt-2" :message="formDataUser.errors.Departamento" />
-                    </div>
-                    <InputLabel for="Estatus" value="Sexo" />
-                    <div class="flex flex-auto justify-evenly">
-                        <div class="space-x-2">
-                            <label for="Hombre">Hombre</label>
-                            <input type="radio" id="Hombre" value="Hombre" v-model="formDataUser.Sexo" />
-                        </div>
-                        <div class="space-x-2">
-                            <label for="Mujer">Mujer</label>
-                        <input type="radio" id="entregado" value="Mujer" v-model="formDataUser.Sexo" />
-                        </div>
-                    </div>
-                    <div class="text-end block font-medium text-sm text-gray-700">Seleccionó: {{
-                        formDataUser.Sexo }}</div>
-                    <p>
-                        Para continuar con tu registro, por favor ingresa una contraseña.
-                    </p>
-                    <p>
-                        Debe de contener mínimo una minúscula, una mayúscula, un número, un símbolo y tener entre 8 y 18
-                        caracteres.
-                    </p>
-                    <InputLabel for="password" value="Contraseña" class="pt-2" />
-                    <TextInput id="password" type="password" class="mt-1 block w-full" v-model="formDataUser.password"
-                        required autocomplete="new-password" />
-                    <InputError class="mt-2" :message="formDataUser.errors.password" />
-                    <InputLabel for="password-confirmation" value="Confirmar contraseña" class="pt-2" />
-                    <TextInput id="password" type="password" class="mt-1 block w-full"
-                        v-model="formDataUser.password_confirmation" required autocomplete="new-password" />
-                    <InputError class="mt-2" :message="formDataUser.errors.password" />
-                    <div class="flex flex-items justify-end pt-4">
-                        <PrimaryButton>Guardar</PrimaryButton>
-                    </div>
-                </form>
-            </div>
-        </Modal>
+        <FirstUpdateDataForm :verificarContraseña="verificarContraseña" :personal="personal" :docente="docente" :departamentos="departamentos" :gradoAcademico="gradoAcademico"></FirstUpdateDataForm>
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -144,7 +82,7 @@ const dataset = [
 <script>
 //Este script permite importar los componentes de las graficas de forma correcta
 import GraficaBarras from '@/Components/GraficaBarras.vue';
-import { forEach } from 'jszip';
+import FirstUpdateDataForm from '@/Components/ComponentsForms/FirstUpdateDataForm.vue';
 
 export default {
     name: 'App',

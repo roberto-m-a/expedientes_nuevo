@@ -7,9 +7,11 @@ use App\Models\Departamento;
 use App\Models\Docente;
 use App\Models\document;
 use App\Models\expediente;
+use App\Models\GradoAcademico;
 use App\Models\Personal;
 use App\Models\Secretaria;
 use App\Models\User;
+use App\Notifications\AutenticacionDeCorreo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -34,9 +36,10 @@ class personalController extends Controller
         if ($personal->administrador == null)
             return Redirect::route('dashboard');
         $departamentos = Departamento::all();
+        $gradoAcademico = GradoAcademico::all();
         $documentosSubidos = document::select('IdUsuario', DB::raw('count(*) as totalDocumentos'))
             ->groupBy('IdUsuario');
-        
+
         $personalData = Personal::leftJoin('docente', 'docente.IdPersonal', '=', 'personal.IdPersonal')
             ->leftJoin('administrador', 'administrador.IdPersonal', '=', 'personal.IdPersonal')
             ->leftJoin('departamento', 'departamento.IdDepartamento', '=', 'personal.IdDepartamento')
@@ -59,13 +62,13 @@ class personalController extends Controller
                 'users.email',
                 'documentos_subidos.totalDocumentos'
             )
-            ->get()->map(function($personal){
-                $personal->has_no_relations = ($personal->totalDocumentos <= 0 || $personal->totalDocumentos == null) && 
-                ($personal->numDocumentos <=0 || $personal->numDocumentos == null);
+            ->get()->map(function ($personal) {
+                $personal->has_no_relations = ($personal->totalDocumentos <= 0 || $personal->totalDocumentos == null) &&
+                    ($personal->numDocumentos <= 0 || $personal->numDocumentos == null);
                 return $personal;
             });
-            
-        return Inertia::render('Dashboard_admin_personal', ['user' => $user, 'personal' => $personal, 'departamentos' => $departamentos, 'personal_data' => $personalData]);
+
+        return Inertia::render('Dashboard_admin_personal', ['user' => $user, 'personal' => $personal, 'departamentos' => $departamentos, 'gradoAcademico' => $gradoAcademico, 'personal_data' => $personalData]);
     }
     /**
      * Crear un personal
@@ -90,14 +93,14 @@ class personalController extends Controller
                 'Nombre' => $request->Nombre,
                 'Apellidos' => $request->Apellidos,
                 'Sexo' => $request->Sexo,
-                'IdDepartamento' => $request->Departamento,
+                'IdDepartamento' => $request->Departamento['IdDepartamento'],
             ]);
 
             if ($request->tipoUsuario == 'Docente') {
                 $request->validate(Docente::$validarDocente);
                 $Docente = Docente::create([
                     'IdPersonal' => $Personal->IdPersonal,
-                    'GradoAcademico' => $request->GradoAcademico,
+                    'GradoAcademico' => $request->GradoAcademico['nombreGradoAcademico'],
                 ]);
                 expediente::create([
                     'IdDocente' => $Docente->IdDocente,
@@ -117,10 +120,11 @@ class personalController extends Controller
                     'email' => $request->email,
                     'IdPersonal' => $Personal->IdPersonal,
                 ]);
-                $user->notify(new notificacionRegistroCorreo());
+                $user->generarTokenVerificaCorreo();
+                $user->notify(new AutenticacionDeCorreo($user->email, $user->token_email));
             }
             DB::commit();
-            return Redirect::route('personal')->with('creacionCorrecta', 'Se ha creado al personal' . (($request->crearUsuario) ? ' y usuario' : '') . ' correctamente');
+            //return Redirect::route('personal')->with('creacionCorrecta', 'Se ha creado al personal' . (($request->crearUsuario) ? ' y usuario' : '') . ' correctamente');
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollback();
             throw $e;
@@ -145,6 +149,7 @@ class personalController extends Controller
      */
     public function editarPersonal(Request $request)
     {
+        $this->validarPersonal($request);
         $user = User::where('IdPersonal', $request->IdPersonal)->first();
         Personal::find($request->IdPersonal)->update([
             'Nombre' => $request->Nombre,
@@ -154,8 +159,8 @@ class personalController extends Controller
         ]);
         if ($request->Docente) {
             $request->validate(Docente::$validarDocente);
-            Docente::where('IdPersonal',$request->IdPersonal)->first()->update([
-                'GradoAcademico' => $request->GradoAcademico,
+            Docente::where('IdPersonal', $request->IdPersonal)->first()->update([
+                'GradoAcademico' => $request->GradoAcademico['nombreGradoAcademico'],
             ]);
         }
         if ($user != null) {
@@ -169,7 +174,7 @@ class personalController extends Controller
                 $user->notify(new notificacionRegistroCorreo());
             }
         }
-        return Redirect::route('personal')->with('actualizacionCorrecta', 'Se han actualizado los datos del personal correctamente');
+        //return Redirect::route('personal')->with('actualizacionCorrecta', 'Se han actualizado los datos del personal correctamente');
     }
     /**
      * Valida un personal
@@ -186,10 +191,11 @@ class personalController extends Controller
         if ($request->Docente) {
             $request->validate(Docente::$validarDocente);
         }
-        $user = User::find($request->IdPersonal);
+        $user = Personal::find($request->IdPersonal)->user;
         if ($user != null) {
-            User::validarCorreo_UnicoYNoRepetido($request->email, $user->id);
+            $request->validate(User::$validarCorreoEdit);
             User::validarDominioCorreo($request->email);
+            User::validarCorreo_UnicoYNoRepetido($request->email, $user->id);
         }
     }
     /**
@@ -220,6 +226,6 @@ class personalController extends Controller
             $personal->secretaria->delete();
         }
         $personal->delete();
-        return Redirect::route('personal')->with('borradoCorrecto','Se ha eliminado al personal correctamente');
+        //return Redirect::route('personal')->with('borradoCorrecto','Se ha eliminado al personal correctamente');
     }
 }

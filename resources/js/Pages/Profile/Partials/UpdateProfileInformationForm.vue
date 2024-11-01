@@ -1,9 +1,11 @@
 <script setup>
+import FlashMessageEdit from '@/Components/ComponentsFlashMessages/FlashMessageEdit.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { Link, useForm, usePage } from '@inertiajs/vue3';
+import { ref } from 'vue';
 import vSelect from 'vue-select';
 const props = defineProps({
     mustVerifyEmail: {
@@ -33,6 +35,44 @@ const form = useForm({
     Departamento: props.departamentos.find(b => b.IdDepartamento === personal.IdDepartamento),
     Sexo: personal.Sexo,
 });
+const flashMessage = ref('');
+const disableButtonForm = ref(false);
+const updateProfileInformation = () => {
+    form.clearErrors();
+    const formDataJson = JSON.stringify(form); // Convertimos a JSON
+    $.ajax({
+        url: route('profile.update'),
+        method: 'PATCH',
+        contentType: 'application/json',
+        data: formDataJson,
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        beforeSend: function(){
+            disableButtonForm.value = true;
+        },
+        success: function (response) {
+            flashMessage.value = 'Datos de perfil actualizados'
+            setTimeout(() => {
+                flashMessage.value = '';
+            }, 3000);
+            disableButtonForm.value = false;
+        },
+        error: function (xhr) {
+            console.log(xhr.responseJSON);
+            if (xhr.status === 422) {
+                let errors = xhr.responseJSON.errors;
+                $.each(errors, function (field, messages) {
+                    form.setError({
+                        [field]: messages[0] || {}
+                    });
+                });
+            }
+            disableButtonForm.value = false;
+        }
+    });
+    //form.post(route('reenviar.verificacionemail'));
+};
 </script>
 
 <template>
@@ -45,7 +85,7 @@ const form = useForm({
             </p>
         </header>
 
-        <form @submit.prevent="form.patch(route('profile.update'))" class="mt-6 space-y-6">
+        <form @submit.prevent="updateProfileInformation" class="mt-6 space-y-6">
             <div>
                 <InputLabel for="name" value="Nombre" />
 
@@ -110,11 +150,12 @@ const form = useForm({
             </div>
 
             <div class="flex items-center gap-4">
-                <PrimaryButton :disabled="form.processing">Guardar</PrimaryButton>
+                <PrimaryButton :class="{ 'opacity-25': disableButtonForm }"
+                :disabled="disableButtonForm">Guardar</PrimaryButton>
 
                 <Transition enter-active-class="transition ease-in-out" enter-from-class="opacity-0"
                     leave-active-class="transition ease-in-out" leave-to-class="opacity-0">
-                    <p v-if="form.recentlySuccessful" class="text-sm text-gray-600">Guardado.</p>
+                    <p v-if="flashMessage" class="text-sm text-gray-600">{{ flashMessage }}.</p>
                 </Transition>
             </div>
         </form>

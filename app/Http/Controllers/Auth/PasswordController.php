@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Docente;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,14 +22,14 @@ class PasswordController extends Controller
      * 
      * @return Illuminate\Http\RedirectResponse Redirecciona a la misma página con un mensaje de la acción realizada
      */
-    public function update(Request $request): RedirectResponse
+    public function update(Request $request)
     {
         $user = User::find(Auth::user()->id);
         $validated = $request->validate(User::getValidacionesActualizarContrasenia());
         $user->update([
             'password' => Hash::make($validated['password']),
         ]);
-        return back()->with('actualizacionCorrecta', 'Haz actualizado tu contraseña correctamente');
+        //return back()->with('actualizacionCorrecta', 'Haz actualizado tu contraseña correctamente');
     }
     /**
      * Actualiza los campos por primera vez
@@ -37,17 +38,23 @@ class PasswordController extends Controller
      * asi como el de crear su contraseña para acceder al sistema siempre y cuando este contenga al
      * menos: una minúscula, una mayúscula, un símbolo, un número y 8 caracteres
      */
-    public function firstPassword(Request $request): RedirectResponse
+    public function completarInformacion(Request $request)
     {
-        $validated = $request->validate(User::getValidacionesNuevoUsuarioSinContrasenia());
+        User::getValidacionesNuevoUsuarioSinContrasenia($request);
         $user = User::find(Auth::user()->id);
         $user->personal->update([
             'IdDepartamento' => $request->Departamento['IdDepartamento'],
             'Sexo' => $request->Sexo,
         ]);
         $user->update([
-            'password' => Hash::make($validated['password']),
+            'password' => Hash::make($request->password),
         ]);
-        return back()->with('actualizacionCorrecta', 'Haz actualizado tus datos correctamente por primera vez');
+        if($user->personal->docente){
+            Docente::validarDocente($request);
+            $user->personal->docente->update([
+                'GradoAcademico' => $request->GradoAcademico['nombreGradoAcademico'],
+            ]);
+        }
+        //return back()->with('actualizacionCorrecta', 'Haz actualizado tus datos correctamente por primera vez');
     }
 }

@@ -18,24 +18,4 @@ class modificacion extends Model
         'IdUsuario',
 
     ];
-
-    /**
-     * Obten el documento asociado a la modificacion
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
-     */
-    public function documento(): HasOne
-    {
-        return $this->hasOne(document::class, 'IdDocumento', 'IdDocumento');
-    }
-
-    /**
-     * Obten el usuario asociado a la modificacion
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
-     */
-    public function user(): HasOne
-    {
-        return $this->hasOne(User::class, 'id', 'IdUsurio');
-    }
 }

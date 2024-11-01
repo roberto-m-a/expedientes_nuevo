@@ -56,7 +56,7 @@ class ProfileController extends Controller
      * 
      * @return Illuminate\Support\Facades\Redirect Redirecciona a la vista del perfil con los datos actualizados
      */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function update(ProfileUpdateRequest $request)
     {
         $request->user()->fill($request->validated());
         User::validarDominioCorreo($request->email);
@@ -71,6 +71,6 @@ class ProfileController extends Controller
             $request->user()->email_verified_at = null;
             $request->user()->save();
         }
-        return Redirect::route('profile.edit')->with('actualizacionCorrecta', 'Se han actualizado los datos en tu perfil');
+        //return Redirect::route('profile.edit')->with('actualizacionCorrecta', 'Se han actualizado los datos en tu perfil');
     }
 }

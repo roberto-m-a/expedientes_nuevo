@@ -185,59 +185,6 @@ defineProps({
 
             <!-- Page Content -->
             <main>
-                <div v-if="$page.props.flash.sinRegistros"
-                    class="alert bg-white text-center text-xl text-red-600 border-gray-300 border-solid border-2 p-2">
-                    <div class=" flex flex-row justify-center items-center">
-                        <svg class="h-5 w-5 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" />
-                            <line x1="15" y1="9" x2="9" y2="15" />
-                            <line x1="9" y1="9" x2="15" y2="15" />
-                        </svg>
-                        {{ $page.props.flash.sinRegistros }}
-                    </div>
-                </div>
-
-                <div v-if="$page.props.flash.creacionCorrecta"
-                    class="alert bg-white text-center text-xl text-green-700 border-gray-300 border-solid border-2 p-2">
-                    <div class=" flex flex-row justify-center items-center">
-                        <svg class="h-5 w-5 text-green-700" width="24" height="24" viewBox="0 0 24 24" stroke-width="2"
-                            stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                            <path stroke="none" d="M0 0h24v24H0z" />
-                            <circle cx="12" cy="12" r="9" />
-                            <path d="M9 12l2 2l4 -4" />
-                        </svg>
-                        {{ $page.props.flash.creacionCorrecta }}
-                    </div>
-                </div>
-
-                <div v-if="$page.props.flash.actualizacionCorrecta"
-                    class="alert bg-white text-center text-xl text-blue-700 border-gray-300 border-solid border-2 p-2">
-                    <div class=" flex flex-row justify-center items-center">
-                        <svg class="h-5 w-5 text-blue-700" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
-                            fill="none" stroke-linecap="round" stroke-linejoin="round">
-                            <path stroke="none" d="M0 0h24v24H0z" />
-                            <path d="M9 7 h-3a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-3" />
-                            <path d="M9 15h3l8.5 -8.5a1.5 1.5 0 0 0 -3 -3l-8.5 8.5v3" />
-                            <line x1="16" y1="5" x2="19" y2="8" />
-                        </svg>
-                        {{ $page.props.flash.actualizacionCorrecta }}
-                    </div>
-                </div>
-
-                <div v-if="$page.props.flash.borradoCorrecto"
-                    class="alert bg-white text-center text-xl text-red-600 border-gray-300 border-solid border-2 p-2">
-                    <div class=" flex flex-row justify-center items-center">
-                        <svg class="h-5 w-5 text-red-600" width="24" height="24" viewBox="0 0 24 24" stroke-width="2"
-                            stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                            <path stroke="none" d="M0 0h24v24H0z" />
-                            <path
-                                d="M19 19h-11l-4 -4a1 1 0 0 1 0 -1.41l10 -10a1 1 0 0 1 1.41 0l5 5a1 1 0 0 1 0 1.41l-9 9" />
-                            <path d="M18 12.3l-6.3 -6.3" />
-                        </svg>
-                        {{ $page.props.flash.borradoCorrecto }}
-                    </div>
-                </div>
                 <slot />
             </main>
         </div>

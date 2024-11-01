@@ -7,6 +7,7 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import Modal from '@/Components/Modal.vue';
 import DangerButton from '@/Components/DangerButton.vue';
 import InputError from '@/Components/InputError.vue';
+import FlashMessageCreate from '../ComponentsFlashMessages/FlashMessageCreate.vue';
 
 const props = defineProps({
     abrirModal: {
@@ -48,60 +49,97 @@ const formEntrega = useForm({
     Archivo: '',
     URL: documento.value?.URL,
 });
-
+const flashMessage = ref('');
+const disableButtonForm = ref(false);
 const entregarDocumento = () => {
-    formEntrega.post(route('validar.entrega'), {
-        onSuccess: () =>{
-            const randomCode = Math.floor(1000 + Math.random() * 9000); // Genera un código aleatorio de 4 dígitos
-            Swal.fire({
-                title: 'Confirmación necesaria',
-                text: `Esta por entregar el documento ${formEntrega.Titulo}. Para continuar, ingresa el código de confirmación: ${randomCode}`,
-                input: 'number',
-                inputAttributes: {
-                    maxlength: 4,
-                    autocapitalize: 'off',
-                    autocorrect: 'off'
-                },
-                showCancelButton: true,
-                confirmButtonText: 'Confirmar',
-                cancelButtonText: 'Cancelar',
-                preConfirm: (inputValue) => {
-                    return new Promise((resolve) => {
-                        if (inputValue === randomCode.toString()) {
-                            resolve(true);
-                        } else {
-                            Swal.showValidationMessage('Código incorrecto');
-                            resolve(false);
-                        }
-                    });
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire('Entrega confirmada', 'El código es correcto.Espere a recargar la pagina', 'success');
-                    formEntrega.post(route('entregar.documento'), {
-                        preserveScroll: true,
-                        onSuccess: () => {
-                            abrirEdit.value = false;
-                            formEntrega.reset();
-                            document.getElementById('Archivo').value = null;
-                            document.querySelector('#vistaPrevia').setAttribute('src', '');
-                            location.reload();
-                        },
-                        onError: () => {
-                            console.log(formEntrega.errors);
-                        },
-                    });
-                } else if (result.dismiss === Swal.DismissReason.cancel) {
-                    abrirEdit.value = false;
-                    formEntrega.reset();
-                    Swal.fire('Acción cancelada', 'No se realizó ninguna acción.', 'error');
+    formEntrega.clearErrors();
+    const randomCode = Math.floor(1000 + Math.random() * 9000); // Genera un código aleatorio de 4 dígitos
+    Swal.fire({
+        title: 'Confirmación necesaria',
+        text: `Esta por entregar el documento ${formEntrega.Titulo}. Para continuar, ingresa el código de confirmación: ${randomCode}`,
+        input: 'number',
+        inputAttributes: {
+            maxlength: 4,
+            autocapitalize: 'off',
+            autocorrect: 'off'
+        },
+        showCancelButton: true,
+        confirmButtonText: 'Confirmar',
+        cancelButtonText: 'Cancelar',
+        preConfirm: (inputValue) => {
+            return new Promise((resolve) => {
+                if (inputValue === randomCode.toString()) {
+                    resolve(true);
+                } else {
+                    Swal.showValidationMessage('Código incorrecto');
+                    resolve(false);
                 }
             });
-        },
-        onError: () => {
-            console.log(formEntrega.errors);
-        },
-    })
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const formData = new FormData();
+            formData.append('IdDocumento', formEntrega.IdDocumento);
+            formData.append('Titulo', formEntrega.Titulo);
+            formData.append('FechaExpedicion', formEntrega.FechaExpedicion);
+            formData.append('FechaEntrega', formEntrega.FechaEntrega);
+            formData.append('Archivo', formEntrega.Archivo);
+            formData.append('URL', formEntrega.URL);
+            $.ajax({
+                url: route('entregar.documento'),
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                beforeSend: function(){
+                    disableButtonForm.value = true;
+                },
+                success: function (response) {
+                    formEntrega.reset();
+                    limpiar();
+                    abrirEntrega.value = false;
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                    flashMessage.value = 'Documento entregado correctamente';
+                    window.location.reload();
+                },
+                error: function (xhr) {
+                    console.log(xhr);
+                    if (xhr.status === 422) {
+                        let errors = xhr.responseJSON.errors;
+                        $.each(errors, function (field, messages) {
+                            formEntrega.setError({
+                                [field]: messages[0] || {}
+                            });
+                        });
+                    }
+                    disableButtonForm.value = false;
+                }
+            });
+            /* formEntrega.post(route('entregar.documento'), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    abrirEdit.value = false;
+                    formEntrega.reset();
+                    document.getElementById('Archivo').value = null;
+                    document.querySelector('#vistaPrevia').setAttribute('src', '');
+                    location.reload();
+                },
+                onError: () => {
+                    console.log(formEntrega.errors);
+                },
+            }); */
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+            abrirEdit.value = false;
+            formEntrega.reset();
+            Swal.fire('Acción cancelada', 'No se realizó ninguna acción.', 'error');
+        }
+    });
 }
 //Metodo para limpiar el input del archivo
 const limpiar = () => {
@@ -141,6 +179,7 @@ const documentoT = async (e) => {
 };
 </script>
 <template>
+    <FlashMessageCreate :flashMessage="flashMessage"></FlashMessageCreate>
     <Modal :show="abrirEntrega">
         <div class="p-8 flex flex-col space-y-4">
             <div class="flex flex-row-reverse items-end justify-between overflow-hidden">
@@ -148,12 +187,12 @@ const documentoT = async (e) => {
             </div>
             <form @submit.prevent="entregarDocumento">
                 <InputLabel for="FechaExpedicion" value="Fecha de expedición" class="pt-2" />
-                <InputLabel for="FechaExpedicion" :value="formEntrega.FechaExpedicion" class="pt-2 font-semibold text-xl" />
+                <InputLabel for="FechaExpedicion" :value="formEntrega.FechaExpedicion"
+                    class="pt-2 font-semibold text-xl" />
                 <InputLabel for="FechaEntrega" value="Fecha de entrega" class="pt-2" />
-                    <TextInput id="FechaEntrega" type="date" :min="formEntrega.FechaExpedicion"
-                        :max="fechaActual" class="mt-1 block w-full" required
-                        v-model="formEntrega.FechaEntrega" />
-                    <InputError class="mt-2" :message="formEntrega.errors.FechaEntrega" />
+                <TextInput id="FechaEntrega" type="date" :min="formEntrega.FechaExpedicion" :max="fechaActual"
+                    class="mt-1 block w-full" required v-model="formEntrega.FechaEntrega" />
+                <InputError class="mt-2" :message="formEntrega.errors.FechaEntrega" />
 
                 <p class="font-bold text-xl text-center">Vista del documento subido</p>
                 <div class="flex justify-center">
@@ -186,8 +225,8 @@ const documentoT = async (e) => {
                     <div class="flex justify-center">
                         <embed id="vistaPrevia" type="application/pdf" class="bg-gray-700 w-full h-60">
                     </div>
-                    <InputLabel v-if="formEntrega.Archivo == ''" for="vistaPrevia"
-                        value="Aún no se ha subido nada" class="text-center text-l text-red-600" />
+                    <InputLabel v-if="formEntrega.Archivo == ''" for="vistaPrevia" value="Aún no se ha subido nada"
+                        class="text-center text-l text-red-600" />
                 </div>
 
                 <div class="flex flex-col justify-center pt-2 text-center">
@@ -196,7 +235,8 @@ const documentoT = async (e) => {
                             *Antes de entregar asegurese de corroborar su información y su archivo.
                         </p>
                     </div>
-                    <PrimaryButton class="flex justify-center">Entregar archivo</PrimaryButton>
+                    <PrimaryButton class="flex justify-center" :class="{ 'opacity-25': disableButtonForm }"
+                    :disabled="disableButtonForm">Entregar archivo</PrimaryButton>
                 </div>
             </form>
         </div>

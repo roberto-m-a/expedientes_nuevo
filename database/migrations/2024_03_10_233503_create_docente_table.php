@@ -15,9 +15,8 @@ return new class extends Migration
         Schema::create('docente', function (Blueprint $table) {
             $table->id('IdDocente');
             $table->timestamps();
-            $table->string('GradoAcademico');
+            $table->string('GradoAcademico')->nullable();
             $table->foreignId('IdPersonal')->references('IdPersonal')->on('personal');
-            //$table->foreignId('IdDepartamento')->references('IdDepartamento')->on('departamento');
         });
         DB::table('docente')->insert([
             [

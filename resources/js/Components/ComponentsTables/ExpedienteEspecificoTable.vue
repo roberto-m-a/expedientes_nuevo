@@ -52,7 +52,7 @@ const columns = [
                 </button>
                 </div>
             </div>`
-                : 'Entregado el: \t' + data.fechaEntrega;
+                : (data.fechaEntrega)? 'Entregado el: \t' + data.fechaEntrega: 'En proceso';
         },
     },
     { data: 'region' },

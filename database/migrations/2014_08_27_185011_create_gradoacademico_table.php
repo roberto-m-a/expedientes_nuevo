@@ -15,7 +15,6 @@ return new class extends Migration
         Schema::create('gradoacademico', function (Blueprint $table) {
             $table->id('IdGradoAcademico');
             $table->string('nombreGradoAcademico');
-            $table->timestamps();
         });
         DB::table('gradoacademico')->insert([
             ['nombreGradoAcademico'=>'Licenciatura'],

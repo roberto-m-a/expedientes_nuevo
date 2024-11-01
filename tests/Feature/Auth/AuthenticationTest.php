@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Requests\Auth\LoginRequest;
 use App\Models\Departamento;
 use App\Models\Personal;
 use App\Models\User;
@@ -25,6 +27,8 @@ class AuthenticationTest extends TestCase
 
     public function test__los_usuarios_pueden_autenticarse_con_el_login(): void
     {
+        $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+
         $departamento = Departamento::create([
             'nombreDepartamento' => 'Sistemas',
         ]);
@@ -40,12 +44,17 @@ class AuthenticationTest extends TestCase
             'IdPersonal' => $personal->IdPersonal,
             'email_verified_at' => now(),
         ]);
-
-        $response = Request::create('/login','POST', [
+/* 
+        $response = Request::create('/login', 'POST', [
             'email' => $user->email,
             'password' => 'passworD@7',
+        ]); */
+        $response = $this->post(route('login'),[
+            'email' => 'test@itoaxaca.edu.mx',
+            'password' => 'passworD@7',
         ]);
-        Auth::login($user);
+        $response->assertStatus(302);
+        $response->assertRedirect(route('dashboard'));
         $this->assertAuthenticated();
     }
 
@@ -77,6 +86,8 @@ class AuthenticationTest extends TestCase
 
     public function test_los_usuarios_pueden_cerrar_sesion(): void
     {
+        $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+
         $departamento = Departamento::create([
             'nombreDepartamento' => 'Sistemas',
         ]);
@@ -92,9 +103,11 @@ class AuthenticationTest extends TestCase
             'IdPersonal' => $personal->IdPersonal,
             'email_verified_at' => now(),
         ]);
-        Auth::user($user);
-        Request::create('/logout','POST');
+        $this->actingAs($user);
+        $response = $this->post('/logout');
 
-        $this->assertGuest();
-        }
+        $response->assertStatus(302);
+        $response->assertRedirect('/');
+    }
+
 }

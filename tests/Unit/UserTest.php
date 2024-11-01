@@ -9,16 +9,15 @@ use Tests\TestCase;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use App\Models\User;
-use App\Notifications\notificacionRegistroCorreo;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use App\Models\Docente;
 use App\Models\document;
 use App\Models\expediente;
 use App\Models\PeriodoEscolar;
 use App\Models\TipoDocumento;
+use App\Notifications\AutenticacionDeCorreo;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Route;
 use Inertia\Response as InertiaResponse;
@@ -99,6 +98,7 @@ class UserTest extends TestCase
         $this->assertInstanceOf(Collection::class, $user->documento);
         $this->assertInstanceOf(document::class, $user->documento->first());
     }
+    //////////Pruebas del metodo store de RegisteredUsercontroller//////////////
     public function test_crear_usuario_docente_desde_la_vista_de_registro()
     {
         // Fake events and notifications
@@ -133,7 +133,7 @@ class UserTest extends TestCase
 
         // Check if the docente record is created
         $this->assertDatabaseHas('docente', [
-            'GradoAcademico' => 'Licenciatura',
+            'GradoAcademico' => null,
             'IdPersonal' => $personal->IdPersonal,
         ]);
 
@@ -144,12 +144,83 @@ class UserTest extends TestCase
             'IdDocente' => $docente->IdDocente,
         ]);
 
-        $expediente = Expediente::where('IdDocente', $docente->IdDocente)->first();
-
-        // Check if the user is authenticated
-        $this->assertTrue(Auth::check());
     }
+    public function test_crear_usuario_docente_desde_la_vista_de_registro_falla_por_no_colocar_nombre()
+    {
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('El campo nombre es obligatorio.');
+        $request = Request::create('/aniadir-usuario', 'POST', [
+            'name' => '',
+            'lastname' => 'Manuel',
+            'email' => 'roberto.manuel@oaxaca.tecnm.mx',
+            'email_confirmation' => 'roberto.manuel@oaxaca.tecnm.mx',
+        ]);
 
+        $controller = new RegisteredUserController();
+
+        $controller->store($request);
+    }
+    public function test_crear_usuario_docente_desde_la_vista_de_registro_falla_por_no_colocar_apellidos()
+    {
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('El campo lastname es obligatorio.');
+        $request = Request::create('/aniadir-usuario', 'POST', [
+            'name' => 'Roberto',
+            'lastname' => '',
+            'email' => 'roberto.manuel@oaxaca.tecnm.mx',
+            'email_confirmation' => 'roberto.manuel@oaxaca.tecnm.mx',
+        ]);
+
+        $controller = new RegisteredUserController();
+
+        $controller->store($request);
+    }
+    public function test_crear_usuario_docente_desde_la_vista_de_registro_falla_por_no_colocar_correo()
+    {
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('El campo correo electrónico es obligatorio.');
+        $request = Request::create('/aniadir-usuario', 'POST', [
+            'name' => 'Roberto',
+            'lastname' => 'Apellidos',
+            'email' => '',
+            'email_confirmation' => 'roberto.manuel@oaxaca.tecnm.mx',
+        ]);
+
+        $controller = new RegisteredUserController();
+
+        $controller->store($request);
+    }
+    public function test_crear_usuario_docente_desde_la_vista_de_registro_falla_por_correos_distintos()
+    {
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('La confirmación de correo electrónico no coincide.');
+        $request = Request::create('/aniadir-usuario', 'POST', [
+            'name' => 'Roberto',
+            'lastname' => 'Apellidos',
+            'email' => 'roberto.manuel@oaxaca.tecnm.mx',
+            'email_confirmation' => 'roberto.manuel.lopez@oaxaca.tecnm.mx',
+        ]);
+
+        $controller = new RegisteredUserController();
+
+        $controller->store($request);
+    }
+    public function test_crear_usuario_docente_desde_la_vista_de_registro_falla_por_correo_no_institucional()
+    {
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('El dominio debe ser de la institución (@itoaxaca.edu.mx o @oaxaca.tecnm.mx)');
+        $request = Request::create('/aniadir-usuario', 'POST', [
+            'name' => 'Roberto',
+            'lastname' => 'Apellidos',
+            'email' => 'roberto.manuel@gmail.com',
+            'email_confirmation' => 'roberto.manuel@gmail.com',
+        ]);
+
+        $controller = new RegisteredUserController();
+
+        $controller->store($request);
+    }
+    /////////////Pruebas del metodo de Validar Usuario////////////////
     /** @test */
     public function test_Validar_un_correo_correcto()
     {
@@ -164,12 +235,11 @@ class UserTest extends TestCase
 
         $controller->validarUsuario($request);
     }
-
     /** @test */
     public function test_Validar_los_correos_no_coinciden()
     {
         $this->expectException(ValidationException::class);
-        $this->expectExceptionMessage('Los correos no coinciden');
+        $this->expectExceptionMessage('La confirmación de correo electrónico no coincide.');
 
         $request = Request::create('/validar-usuario', 'POST', [
             'email' => 'test@itoaxaca.edu.mx',
@@ -242,6 +312,7 @@ class UserTest extends TestCase
         // Datos del request
         $request = Request::create('/aniadir-usuario', 'POST', [
             'email' => 'test@itoaxaca.edu.mx',
+            'email_confirmation' => 'test@itoaxaca.edu.mx',
             'IdPersonal' => $personal->IdPersonal,
         ]);
 
@@ -260,7 +331,7 @@ class UserTest extends TestCase
         $user = User::where('email', 'test@itoaxaca.edu.mx')->first();
 
         // Verifica que se haya enviado la notificación al usuario
-        Notification::assertSentTo($user, notificacionRegistroCorreo::class);
+        Notification::assertSentTo($user, AutenticacionDeCorreo::class);
     }
     /** @test */
     public function test_renderiza_correctamente_la_vista_para_el_inicio_de_sesion()

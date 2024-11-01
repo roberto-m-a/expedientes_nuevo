@@ -17,9 +17,14 @@ return new class extends Migration
             $table->id();
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
+            $table->string('token_email')->nullable();
+            $table->dateTime('token_email_expire_at')->nullable();
             $table->string('password')->nullable();
             $table->rememberToken();
             $table->timestamps();
+            $table->string('OTPassword')->nullable();
+            $table->dateTime('OTPassword_expire_at')->nullable();
+            $table->string('OTP_token')->nullable();
             $table->foreignId('IdPersonal')->references('IdPersonal')->on('personal');
         });
         DB::table('users')->insert([

@@ -4,17 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Administrador;
 use App\Models\Departamento;
-use App\Models\Docente;
-use App\Models\expediente;
+use App\Models\document;
+use App\Models\GradoAcademico;
 use App\Models\PeriodoEscolar;
-use App\Models\Personal;
 use App\Models\Secretaria;
 use App\Models\TipoDocumento;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
@@ -23,40 +20,29 @@ class DashboardController extends Controller
     public function index()
     {
         $user = User::find(Auth::user()->id);
-        $personal = Personal::where('IdPersonal', Auth::user()->IdPersonal)->first();
+        $personal = $user->personal;
         $departamentos = Departamento::all();
+        $tipos_documentos = TipoDocumento::get();
         $verificarContraseña = false;
         if ($user->password == null) {
             $verificarContraseña = true;
         }
-
-        if (Docente::where('IdPersonal', $personal->IdPersonal)->first() != null) {
-            $docente = Docente::where('IdPersonal', $personal->IdPersonal)->first();
-            $expediente = expediente::where('IdDocente', $docente->IdDocente)->first();
-            $tipos_documentos = DB::table('tipo_documento')->get();
-
-            $combinaciones = [];
-            foreach ($tipos_documentos as $tipo_documento) {
-                $combinaciones[] = [
-                    'IdTipoDocumento' => $tipo_documento->IdTipoDocumento,
-                    'nombreTipoDoc' => $tipo_documento->nombreTipoDoc,
-                ];
-            }
-            //dd($combinaciones);
-            $documentos_data = collect($combinaciones)->map(function ($combinacion) use ($expediente) {
-                $cantidad = DB::table('documento')
-                    ->where('documento.IdExpediente', $expediente->IdExpediente)
-                    ->where('documento.IdTipoDocumento', $combinacion['IdTipoDocumento'])
+        if ($personal->docente != null) {
+            $docente = $personal->docente;
+            $expediente = $docente->expediente;
+            $gradoAcademico = GradoAcademico::all();
+            $documentos_data = $tipos_documentos->map(function ($tipo_doc) use ($expediente) {
+                $cantidad = document::where('documento.IdExpediente', $expediente->IdExpediente)
+                    ->where('documento.IdTipoDocumento', $tipo_doc['IdTipoDocumento'])
                     ->count();
-
                 return [
-                    'IdTipoDocumento' => $combinacion['IdTipoDocumento'],
-                    'nombreTipoDoc' => $combinacion['nombreTipoDoc'],
+                    'IdTipoDocumento' => $tipo_doc['IdTipoDocumento'],
+                    'nombreTipoDoc' => $tipo_doc['nombreTipoDoc'],
                     'cantidad' => $cantidad
                 ];
             });
-            $interpretacion = 'Cantidad de documentos en mi expediente';
-            return Inertia::render('Dashboard', ['verificarContraseña' => $verificarContraseña, 'user' => $user, 'personal' => $personal, 'departamentos' => $departamentos, 'documentos_data' => $documentos_data, 'interpretacion' => $interpretacion]);
+            $interpretacion = 'Cantidad de documentos en mi expediente por cada tipo de documento';
+            return Inertia::render('Dashboard', ['verificarContraseña' => $verificarContraseña, 'user' => $user, 'personal' => $personal, 'docente' => $docente, 'departamentos' => $departamentos, 'gradoAcademico' => $gradoAcademico, 'documentos_data' => $documentos_data, 'interpretacion' => $interpretacion]);
         } else {
             $tipo_documentos = TipoDocumento::all();
             $periodos_escolares = PeriodoEscolar::all();
@@ -66,12 +52,7 @@ class DashboardController extends Controller
             });
             // Crear una colección con los sexos
             $sexos = ['Hombre', 'Mujer'];
-
-            // Obtener los tipos de documentos
-            $tipos_documentos = DB::table('tipo_documento')->get();
-
             $combinaciones = [];
-
             foreach ($tipos_documentos as $tipo_documento) {
                 foreach ($sexos as $sexo) {
                     $combinaciones[] = [
@@ -81,16 +62,13 @@ class DashboardController extends Controller
                     ];
                 }
             }
-
             $documentos_data = collect($combinaciones)->map(function ($combinacion) {
-                $cantidad = DB::table('documento')
-                    ->join('expediente', 'expediente.IdExpediente', '=', 'documento.IdExpediente')
+                $cantidad = document::join('expediente', 'expediente.IdExpediente', '=', 'documento.IdExpediente')
                     ->join('docente', 'docente.IdDocente', '=', 'expediente.IdDocente')
                     ->join('personal', 'personal.IdPersonal', '=', 'docente.IdPersonal')
                     ->where('documento.IdTipoDocumento', $combinacion['IdTipoDocumento'])
                     ->where('personal.Sexo', $combinacion['Sexo'])
                     ->count();
-
                 return [
                     'IdTipoDocumento' => $combinacion['IdTipoDocumento'],
                     'nombreTipoDoc' => $combinacion['nombreTipoDoc'],
@@ -99,7 +77,6 @@ class DashboardController extends Controller
                 ];
             });
             $interpretacion = 'Cantidad de documentos por cada tipo de documento';
-            //dd($documentos_data);
             $dataHombres = [];
             $dataMujeres = [];
             foreach ($documentos_data as $documento) {
@@ -121,17 +98,23 @@ class DashboardController extends Controller
             }
         }
     }
-
+    /**
+     * Filtrar consulta para la información de la gráfica
+     * 
+     * El Método permite filtrar los documentos en cantidadcon los datos que se mandan en la petición para despues
+     * almacenarlos en arreglos que seran tratados por la vista a través de gráficas. También se realiza  una 
+     * interpretación con respecto a lo filtrado para mostrarlo en la vista. El método retorna los datos en un JSON
+     * y que pueda ser tratada por la petición AJAX
+     * 
+     * @param Illuminate\Http\Request Petición HTTP con los datos para filtrar a la consulta
+     */
     public function filtrarConsulta(Request $request)
     {
         // Crear una colección con los sexos
         $sexos = ['Hombre', 'Mujer'];
-
         // Obtener los tipos de documentos
-        $tipos_documentos = DB::table('tipo_documento')->get();
-
+        $tipos_documentos = TipoDocumento::get();
         $combinaciones = [];
-
         foreach ($tipos_documentos as $tipo_documento) {
             foreach ($sexos as $sexo) {
                 $combinaciones[] = [
@@ -141,15 +124,12 @@ class DashboardController extends Controller
                 ];
             }
         }
-
         $documentos_data = collect($combinaciones)->map(function ($combinacion) use ($request) {
-            $documentos_datos = DB::table('documento')
-                ->join('expediente', 'expediente.IdExpediente', '=', 'documento.IdExpediente')
+            $documentos_datos = document::join('expediente', 'expediente.IdExpediente', '=', 'documento.IdExpediente')
                 ->join('docente', 'docente.IdDocente', '=', 'expediente.IdDocente')
                 ->join('personal', 'personal.IdPersonal', '=', 'docente.IdPersonal')
                 ->where('documento.IdTipoDocumento', $combinacion['IdTipoDocumento'])
                 ->where('personal.Sexo', $combinacion['Sexo']);
-
             // Agregar filtros condicionales
             if ($request->TipoDocumento != '' || $request->TipoDocumento != null) {
                 $documentos_datos->where('IdTipoDocumento', $request->TipoDocumento['IdTipoDocumento']);
@@ -169,7 +149,6 @@ class DashboardController extends Controller
             }
             // Obtener la cantidad de documentos que coinciden con los criterios
             $cantidad = $documentos_datos->count();
-
             return [
                 'IdTipoDocumento' => $combinacion['IdTipoDocumento'],
                 'nombreTipoDoc' => $combinacion['nombreTipoDoc'],
@@ -180,13 +159,10 @@ class DashboardController extends Controller
         $registros_vacios = $documentos_data->every(function ($item) {
             return $item['cantidad'] === 0;
         });
-
         if ($registros_vacios) {
-            return Redirect::route('dashboard')->with('sinRegistros', 'Al parecer no hay registros con los parámetros ingresados');
+            return response()->json(['error' => 'Al parecer no hay registros con los parámetros ingresados'], 404);
         }
-        //dd($documentos_data);
         $interpretacion = 'Cantidad de documentos';
-
         if ($request->TipoDocumento != '' || $request->TipoDocumento != null) {
             $interpretacion = $interpretacion . ' de ' . $request->TipoDocumento['nombreTipoDoc'];
         }
@@ -240,19 +216,24 @@ class DashboardController extends Controller
                 array_push($labelsTipoDoc, $tipoDoc['nombreTipoDoc']);
             }
         }
-        $departamentos = Departamento::all();
-        $periodos_escolares = PeriodoEscolar::all();
-        $periodos_escolaresM = $periodos_escolares->map(function ($periodo) {
+        return response()->json([
+            'labelsTipoDoc' => $labelsTipoDoc,
+            'interpretacion' => $interpretacion,
+            'dataHombres' => $dataHombres,
+            'dataMujeres' => $dataMujeres
+        ]);
+        /* $departamentos = Departamento::all();
+        $periodos_escolares = PeriodoEscolar::all()->map(function ($periodo) {
             $periodo->generalInfo = $periodo->nombre_corto . ' (' . $periodo->fechaInicio . '-' . $periodo->fechaTermino . ')';
             return $periodo;
         });
         $user = User::find(Auth::user()->id);
         $personal = Personal::where('IdPersonal', Auth::user()->IdPersonal)->first();
         if (Administrador::where('IdPersonal', $personal->IdPersonal)->first() !== null) {
-            return Inertia::render('Dashboard_admin', ['user' => $user, 'personal' => $personal, 'tipo_documentos' => $tipo_documentos, 'departamentos' => $departamentos, 'periodos_escolares' => $periodos_escolaresM, 'interpretacion' => $interpretacion, 'dataHombres' => $dataHombres, 'dataMujeres' => $dataMujeres, 'labelsTipoDoc' => $labelsTipoDoc]);
+            return Inertia::render('Dashboard_admin', ['user' => $user, 'personal' => $personal, 'tipo_documentos' => $tipo_documentos, 'departamentos' => $departamentos, 'periodos_escolares' => $periodos_escolares, 'interpretacion' => $interpretacion, 'dataHombres' => $dataHombres, 'dataMujeres' => $dataMujeres, 'labelsTipoDoc' => $labelsTipoDoc]);
         }
         if (Secretaria::where('IdPersonal', $personal->IdPersonal)->first() !== null) {
-            return Inertia::render('Dashboard_secretaria', ['user' => $user, 'personal' => $personal, 'tipo_documentos' => $tipo_documentos, 'departamentos' => $departamentos, 'periodos_escolares' => $periodos_escolaresM, 'interpretacion' => $interpretacion, 'dataHombres' => $dataHombres, 'dataMujeres' => $dataMujeres, 'labelsTipoDoc' => $labelsTipoDoc]);
-        }
+            return Inertia::render('Dashboard_secretaria', ['user' => $user, 'personal' => $personal, 'tipo_documentos' => $tipo_documentos, 'departamentos' => $departamentos, 'periodos_escolares' => $periodos_escolares, 'interpretacion' => $interpretacion, 'dataHombres' => $dataHombres, 'dataMujeres' => $dataMujeres, 'labelsTipoDoc' => $labelsTipoDoc]);
+        } */
     }
 }

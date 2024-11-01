@@ -200,7 +200,7 @@ class DepartamentoTest extends TestCase
         $responseContent = $response->toResponse($request)->getContent();
         $this->assertStringContainsString('Dashboard_secre_departamento', $responseContent);
     }
-
+    //////////////////Pruebas de crear departamento/////////////////////////
     public function test_Nuevo_departamento_exitoso()
     {
         // Desactiva eventos para evitar que realmente se dispare el evento Registered
@@ -219,6 +219,7 @@ class DepartamentoTest extends TestCase
             'nombreDepartamento' => 'Nuevo Departamento',
         ]);
     }
+    //Prueba de error
     public function test_Nuevo_Departamento_falla_por_no_ser_unico()
     {
         Departamento::create([
@@ -234,7 +235,7 @@ class DepartamentoTest extends TestCase
 
         $controller->nuevoDepartamento($request);
     }
-
+    ///////////////////////////Prueba para editar departamentos/////////////////////////
     public function test_editar_departamento()
     {
         $departamento = Departamento::create([
@@ -254,8 +255,8 @@ class DepartamentoTest extends TestCase
             'nombreDepartamento' => 'Nuevo Departamento editado',
         ]);
     }
-
-    public function test_validar_departamento_no_unico()
+    //Prueba de error
+    public function test_validar_departamento_falla_por_no_ser_unico()
     {
         Departamento::create([
             'nombreDepartamento' => 'Nuevo Departamento',
